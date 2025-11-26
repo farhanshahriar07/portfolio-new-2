@@ -631,7 +631,7 @@ const App = () => {
                 </div>
                 
                 <div className={`mt-20 pt-8 border-t ${themeClasses.border} flex flex-col md:flex-row justify-between text-sm ${themeClasses.textSubtle} font-mono gap-4 items-center`}>
-                  <span>© 2024 Alex Engineer</span>
+                  <span>© 2024 Farhan Shahriar</span>
                   <span>Made with React & Tailwind</span>
                 </div>
               </RevealOnScroll>
