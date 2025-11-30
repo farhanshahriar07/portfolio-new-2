@@ -3,8 +3,13 @@ import {
   Menu, X, Linkedin, Github, Mail, Download, ArrowUpRight, 
   Cpu, Thermometer, Box, Zap, FileText, BookOpen, ArrowLeft, 
   Clock, ChevronRight, Send, Settings, Ruler, GitCommit,
-  Moon, Sun
+  Moon, Sun, Loader, GraduationCap, Facebook, Instagram, Twitter, MessageCircle, Globe
 } from 'lucide-react';
+
+// --- Configuration ---
+// Ensure this matches your Flask local address
+const API_BASE_URL = 'https://adnan-backend-eyxe.onrender.com/api'; 
+// const API_BASE_URL = 'http://127.0.0.1:5000/api'; // Local Flask API
 
 // --- Styles & Fonts ---
 const styles = `
@@ -25,7 +30,6 @@ const styles = `
     animation: marquee 30s linear infinite;
   }
   
-  /* Dynamic Grid based on CSS variables would be ideal, but hardcoding for React portability */
   .bg-grid-dark {
     background-size: 40px 40px;
     background-image: linear-gradient(to right, rgba(255, 255, 255, 0.03) 1px, transparent 1px),
@@ -71,9 +75,9 @@ const RevealOnScroll = ({ children, className = "" }) => {
 const Marquee = ({ items, isDark }) => (
   <div className={`relative flex overflow-hidden py-4 border-y ${isDark ? 'bg-zinc-950 border-zinc-800' : 'bg-stone-100 border-zinc-200'}`}>
     <div className="animate-marquee whitespace-nowrap flex gap-16 items-center">
-      {items.concat(items).map((item, i) => (
+      {(items.length > 0 ? items.concat(items).concat(items) : [{name: 'Loading Skills...'}]).map((item, i) => (
         <span key={i} className={`text-xl md:text-2xl font-mono mx-4 flex items-center gap-4 ${isDark ? 'text-zinc-600' : 'text-zinc-400'}`}>
-          <GitCommit size={14} className={isDark ? 'text-zinc-700' : 'text-zinc-400'} /> {item}
+          <GitCommit size={14} className={isDark ? 'text-zinc-700' : 'text-zinc-400'} /> {item.name || item}
         </span>
       ))}
     </div>
@@ -83,9 +87,22 @@ const Marquee = ({ items, isDark }) => (
 const App = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [activeSection, setActiveSection] = useState('home');
-  const [showAllBlogs, setShowAllBlogs] = useState(false);
   const [scrollY, setScrollY] = useState(0);
   const [theme, setTheme] = useState('dark');
+  
+  // --- Data State ---
+  const [loading, setLoading] = useState(true);
+  const [aboutData, setAboutData] = useState(null);
+  const [skillsData, setSkillsData] = useState([]);
+  const [educationData, setEducationData] = useState([]);
+  const [projectsData, setProjectsData] = useState([]);
+  const [experienceData, setExperienceData] = useState([]);
+  const [thesisData, setThesisData] = useState([]);
+  
+  // Contact Form State
+  const [contactForm, setContactForm] = useState({ name: '', email: '', subject: '', message: '' });
+  const [sending, setSending] = useState(false);
+  const [sentSuccess, setSentSuccess] = useState(false);
 
   const isDark = theme === 'dark';
 
@@ -93,46 +110,113 @@ const App = () => {
     setTheme(prev => prev === 'dark' ? 'light' : 'dark');
   };
 
-  // Scroll Spy & Parallax Hook
+  // --- Fetch API Data ---
+  useEffect(() => {
+    const fetchAllData = async () => {
+      try {
+        const [aboutRes, skillsRes, eduRes, projectsRes, expRes, thesisRes] = await Promise.all([
+          fetch(`${API_BASE_URL}/about`),
+          fetch(`${API_BASE_URL}/skills`),
+          fetch(`${API_BASE_URL}/education`),
+          fetch(`${API_BASE_URL}/projects`),
+          fetch(`${API_BASE_URL}/experience`),
+          fetch(`${API_BASE_URL}/thesis`)
+        ]);
+
+        if (aboutRes.ok) setAboutData(await aboutRes.json());
+        if (skillsRes.ok) setSkillsData(await skillsRes.json());
+        if (eduRes.ok) setEducationData(await eduRes.json());
+        if (projectsRes.ok) setProjectsData(await projectsRes.json());
+        if (expRes.ok) setExperienceData(await expRes.json());
+        if (thesisRes.ok) setThesisData(await thesisRes.json());
+      } catch (error) {
+        console.error("Failed to fetch data:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchAllData();
+  }, []);
+
+  // --- Scroll Listener ---
   useEffect(() => {
     const handleScroll = () => {
       setScrollY(window.scrollY);
-
-      if (!showAllBlogs) {
-        const sections = ['home', 'about', 'skills', 'projects', 'experience', 'thesis', 'blogs', 'contact'];
-        for (const section of sections) {
-          const element = document.getElementById(section);
-          if (element) {
-            const rect = element.getBoundingClientRect();
-            if (rect.top <= 200 && rect.bottom >= 200) {
-              setActiveSection(section);
-            }
+      const sections = ['home', 'about', 'skills', 'education', 'projects', 'experience', 'thesis', 'contact'];
+      for (const section of sections) {
+        const element = document.getElementById(section);
+        if (element) {
+          const rect = element.getBoundingClientRect();
+          if (rect.top <= 200 && rect.bottom >= 200) {
+            setActiveSection(section);
           }
         }
       }
     };
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
-  }, [showAllBlogs]);
+  }, []);
 
   const scrollToSection = (id) => {
     setIsMenuOpen(false);
-    if (showAllBlogs) {
-      setShowAllBlogs(false);
-      setTimeout(() => {
-        const element = document.getElementById(id);
-        if (element) element.scrollIntoView({ behavior: 'smooth' });
-      }, 100);
-    } else {
-      const element = document.getElementById(id);
-      if (element) element.scrollIntoView({ behavior: 'smooth' });
+    const element = document.getElementById(id);
+    if (element) element.scrollIntoView({ behavior: 'smooth' });
+  };
+
+  const handleContactChange = (e) => {
+    setContactForm({ ...contactForm, [e.target.name]: e.target.value });
+  };
+
+  const handleContactSubmit = async (e) => {
+    e.preventDefault();
+    setSending(true);
+    try {
+      const response = await fetch(`${API_BASE_URL}/contact`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(contactForm)
+      });
+      if (response.ok) {
+        setSentSuccess(true);
+        setContactForm({ name: '', email: '', subject: '', message: '' });
+        setTimeout(() => setSentSuccess(false), 5000);
+      }
+    } catch (error) {
+      console.error("Error sending message:", error);
+    } finally {
+      setSending(false);
     }
   };
 
-  const handleViewAllBlogs = () => {
-    setShowAllBlogs(true);
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+  // --- Helper to build contact links list dynamically ---
+  const getContactLinks = () => {
+    if (!aboutData) return [];
+    
+    const links = [];
+    
+    // Check specific fields from your models.py About class
+    if (aboutData.email) links.push({ icon: Mail, text: aboutData.email, href: `mailto:${aboutData.email}` });
+    if (aboutData.website) links.push({ icon: Globe, text: 'Website', href: aboutData.website });
+    if (aboutData.github) links.push({ icon: Github, text: 'GitHub', href: aboutData.github });
+    if (aboutData.linkedin) links.push({ icon: Linkedin, text: 'LinkedIn', href: aboutData.linkedin });
+    if (aboutData.facebook) links.push({ icon: Facebook, text: 'Facebook', href: aboutData.facebook });
+    if (aboutData.instagram) links.push({ icon: Instagram, text: 'Instagram', href: aboutData.instagram });
+    if (aboutData.twitter) links.push({ icon: Twitter, text: 'Twitter', href: aboutData.twitter });
+    
+    // WhatsApp logic - ensure it handles just numbers or full links
+    if (aboutData.whatsapp) {
+        let waLink = aboutData.whatsapp;
+        if (!waLink.startsWith('http')) {
+            waLink = `https://wa.me/${aboutData.whatsapp.replace(/[^0-9]/g, '')}`;
+        }
+        links.push({ icon: MessageCircle, text: 'WhatsApp', href: waLink });
+    }
+
+    return links;
   };
+
+  const contactLinks = getContactLinks();
 
   // --- Theme Colors Helper ---
   const themeClasses = {
@@ -150,42 +234,18 @@ const App = () => {
     sectionAltBg: isDark ? 'bg-black' : 'bg-zinc-100',
   };
 
-  // --- Data ---
-  const projects = [
-    {
-      title: "6-DOF Robotic Arm",
-      category: "Mechatronics",
-      id: "PRJ-001",
-      description: "Designed and fabricated a 6-degree-of-freedom robotic arm for assembly line automation.",
-      imageColor: isDark ? "bg-orange-900/10" : "bg-orange-100",
-      textColor: isDark ? "text-orange-200" : "text-orange-800"
-    },
-    {
-      title: "EV Battery System",
-      category: "Thermal Analysis",
-      id: "PRJ-002",
-      description: "CFD simulation and optimization of liquid cooling channels for a 400V battery pack.",
-      imageColor: isDark ? "bg-blue-900/10" : "bg-blue-100",
-      textColor: isDark ? "text-blue-200" : "text-blue-800"
-    },
-    {
-      title: "Mars Rover Chassis",
-      category: "Automotive",
-      id: "PRJ-003",
-      description: "Structural design and FEA validation of a lightweight aluminum chassis.",
-      imageColor: isDark ? "bg-stone-800/50" : "bg-stone-200",
-      textColor: isDark ? "text-stone-300" : "text-stone-700"
-    },
-    {
-      title: "Pneumatic Automation",
-      category: "Industrial",
-      id: "PRJ-004",
-      description: "Retrofitting an industrial manual press with PLC-controlled pneumatics.",
-      imageColor: isDark ? "bg-zinc-800/50" : "bg-zinc-200",
-      textColor: isDark ? "text-zinc-300" : "text-zinc-700"
-    }
-  ];
+  if (loading) {
+    return (
+      <div className={`min-h-screen flex items-center justify-center ${themeClasses.bg}`}>
+        <div className="flex flex-col items-center gap-4">
+          <Settings className={`animate-spin w-12 h-12 ${themeClasses.text}`} />
+          <p className={`${themeClasses.textMuted} font-mono animate-pulse`}>INITIALIZING SYSTEM...</p>
+        </div>
+      </div>
+    );
+  }
 
+  // --- Static Blog Data (Frontend Only as per your models) ---
   const blogPosts = [
     {
       id: 1,
@@ -204,24 +264,6 @@ const App = () => {
       excerpt: "A deep dive into Geometric Dimensioning and Tolerancing modifiers.",
       readTime: "8 min",
       color: isDark ? "bg-amber-900/20" : "bg-amber-100"
-    },
-    {
-      id: 3,
-      title: "My Journey with 3D Printing Titanium",
-      date: "Aug 10, 2023",
-      category: "Log",
-      excerpt: "Lessons learned from handling metal sintering powders.",
-      readTime: "6 min",
-      color: isDark ? "bg-rose-900/20" : "bg-rose-100"
-    },
-    {
-      id: 4,
-      title: "Thermodynamics in EV Batteries",
-      date: "Jul 05, 2023",
-      category: "Research",
-      excerpt: "Analyzing trade-offs between liquid cooling and phase-change materials.",
-      readTime: "12 min",
-      color: isDark ? "bg-sky-900/20" : "bg-sky-100"
     }
   ];
 
@@ -235,7 +277,7 @@ const App = () => {
         style={{ transform: `translateY(${scrollY * 0.5}px)` }}
       />
       
-      {/* --- Decorative Floating Gears/Elements --- */}
+      {/* --- Decorative Floating Gears --- */}
       <div 
         className={`fixed top-20 right-[-100px] opacity-5 pointer-events-none z-0 hidden md:block ${isDark ? 'text-white' : 'text-black'}`}
         style={{ transform: `rotate(${scrollY * 0.2}deg)` }}
@@ -258,21 +300,15 @@ const App = () => {
           </div>
           
           <div className="hidden md:flex items-center gap-1">
-            {!showAllBlogs ? (
-               ['Home', 'About', 'Projects', 'Experience', 'Thesis', 'Blogs'].map((item) => (
-                <button
-                  key={item}
-                  onClick={() => scrollToSection(item.toLowerCase())}
-                  className={`px-5 py-2 rounded-full text-sm font-medium transition-all duration-300 ${activeSection === item.toLowerCase() ? `${isDark ? 'bg-white text-zinc-900' : 'bg-zinc-900 text-white'} shadow-sm` : `${themeClasses.textMuted} hover:${themeClasses.text}`}`}
-                >
-                  {item}
-                </button>
-              ))
-            ) : (
-              <button onClick={() => setShowAllBlogs(false)} className={`px-5 py-2 rounded-full text-sm font-medium ${isDark ? 'bg-white text-zinc-900' : 'bg-zinc-900 text-white'}`}>
-                Back to Portfolio
+            {['Home', 'About', 'Skills', 'Education', 'Projects', 'Experience', 'Thesis'].map((item) => (
+              <button
+                key={item}
+                onClick={() => scrollToSection(item.toLowerCase())}
+                className={`px-5 py-2 rounded-full text-sm font-medium transition-all duration-300 ${activeSection === item.toLowerCase() ? `${isDark ? 'bg-white text-zinc-900' : 'bg-zinc-900 text-white'} shadow-sm` : `${themeClasses.textMuted} hover:${themeClasses.text}`}`}
+              >
+                {item}
               </button>
-            )}
+            ))}
             
             <button 
                onClick={() => scrollToSection('contact')}
@@ -281,16 +317,18 @@ const App = () => {
               Contact
             </button>
 
-            {/* Resume Download Option */}
-            <a 
-              href="/resume.pdf" 
-              download="Alex_Engineer_Resume.pdf"
-              className={`ml-2 px-4 py-2 rounded-full text-sm font-medium border ${themeClasses.border} hover:bg-zinc-500/10 transition-all flex items-center gap-2 ${themeClasses.textSubtle} hover:${themeClasses.text}`}
-            >
-              Resume <Download size={14} />
-            </a>
+            {/* Dynamic Resume Link */}
+            {aboutData?.resume_link && (
+                <a 
+                href={aboutData.resume_link} 
+                target="_blank"
+                rel="noopener noreferrer"
+                className={`ml-2 px-4 py-2 rounded-full text-sm font-medium border ${themeClasses.border} hover:bg-zinc-500/10 transition-all flex items-center gap-2 ${themeClasses.textSubtle} hover:${themeClasses.text}`}
+                >
+                Resume <Download size={14} />
+                </a>
+            )}
 
-            {/* Theme Toggle */}
             <button 
               onClick={toggleTheme}
               className={`ml-2 p-2 rounded-full border ${themeClasses.border} hover:bg-zinc-500/10 transition-colors ${themeClasses.text}`}
@@ -308,7 +346,7 @@ const App = () => {
       {/* Mobile Menu Overlay */}
       <div className={`fixed inset-0 ${themeClasses.bg} z-40 pt-32 px-6 md:hidden transition-all duration-500 transform ${isMenuOpen ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-full pointer-events-none'}`}>
         <div className="flex flex-col gap-8 text-center">
-          {['Home', 'About', 'Projects', 'Experience', 'Thesis', 'Blogs', 'Contact'].map((item) => (
+          {['Home', 'About', 'Skills', 'Education', 'Projects', 'Experience', 'Thesis', 'Contact'].map((item) => (
             <button 
               key={item}
               onClick={() => scrollToSection(item.toLowerCase())}
@@ -318,9 +356,11 @@ const App = () => {
             </button>
           ))}
           <div className="flex justify-center gap-4 mt-4">
-             <a href="/resume.pdf" download className={`text-xl font-serif italic ${themeClasses.textMuted} hover:${themeClasses.text} flex items-center gap-2`}>
-                Resume <Download size={20} />
-             </a>
+             {aboutData?.resume_link && (
+                 <a href={aboutData.resume_link} target="_blank" rel="noopener noreferrer" className={`text-xl font-serif italic ${themeClasses.textMuted} hover:${themeClasses.text} flex items-center gap-2`}>
+                    Resume <Download size={20} />
+                 </a>
+             )}
              <button onClick={toggleTheme} className={`text-xl font-serif italic ${themeClasses.textMuted} hover:${themeClasses.text} flex items-center gap-2`}>
                 Theme {isDark ? <Sun size={20} /> : <Moon size={20} />}
              </button>
@@ -328,317 +368,367 @@ const App = () => {
         </div>
       </div>
 
-      {showAllBlogs ? (
-        // === BLOG PAGE ===
-        <div className="pt-32 pb-20 container mx-auto px-6 max-w-5xl animate-in fade-in slide-in-from-bottom-8 duration-700 relative z-10">
-          <button onClick={() => setShowAllBlogs(false)} className={`group flex items-center gap-2 ${themeClasses.textMuted} hover:${themeClasses.text} mb-8 transition-colors`}>
-            <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" /> Back to Overview
-          </button>
+      {/* === MAIN PORTFOLIO === */}
+      
+      {/* Hero Section */}
+      <section id="home" className="min-h-screen pt-32 md:pt-40 pb-20 px-6 flex flex-col justify-between relative z-10">
+        <div className="container mx-auto max-w-6xl">
+          <RevealOnScroll>
+            <div className="flex items-center gap-4 mb-6 opacity-60">
+                <Ruler size={16} className={themeClasses.textMuted} />
+                <span className={`font-mono text-xs uppercase tracking-[0.2em] ${themeClasses.textMuted}`}>System.Architecture.Design</span>
+                <div className={`h-px w-24 ${isDark ? 'bg-zinc-700' : 'bg-zinc-300'}`}></div>
+            </div>
+            <h1 className={`text-5xl sm:text-7xl md:text-9xl font-serif font-medium leading-[0.95] md:leading-[0.9] tracking-tight mb-8 ${themeClasses.text} relative`}>
+              {aboutData?.name ? aboutData.name.split(' ')[0] : 'Design'} <br/>
+              <span className={`italic ${themeClasses.textSubtle} ml-2 md:ml-24 relative z-10`}>
+                {aboutData?.name ? aboutData.name.split(' ').slice(1).join(' ') : 'Precision.'}
+              </span>
+              <div className={`absolute bottom-2 left-2 md:left-24 w-32 h-1 ${isDark ? 'bg-zinc-800' : 'bg-zinc-300'} -z-10 skew-x-12`}></div>
+            </h1>
+          </RevealOnScroll>
           
-          <h1 className={`text-5xl md:text-8xl font-serif font-medium mb-12 md:mb-16 tracking-tight ${themeClasses.text}`}>
-            Engineering <br/><span className={`italic ${themeClasses.textSubtle}`}>Chronicles</span>
-          </h1>
-
-          <div className="grid md:grid-cols-2 gap-x-12 gap-y-16">
-            {blogPosts.map((post) => (
-              <div key={post.id} className="group cursor-pointer">
-                <div className={`aspect-[4/3] ${post.color} mb-6 rounded-sm overflow-hidden relative`}>
-                   <div className="absolute inset-0 opacity-10" style={{backgroundImage: 'radial-gradient(circle at 2px 2px, black 1px, transparent 0)', backgroundSize: '20px 20px'}}></div>
-                   <div className={`absolute top-4 left-4 ${isDark ? 'bg-zinc-900/90 border-zinc-800' : 'bg-white/90 border-zinc-200'} border px-3 py-1 text-xs font-mono uppercase tracking-wider ${themeClasses.textSubtle}`}>{post.category}</div>
-                </div>
-                <div className={`flex items-center gap-4 text-xs font-mono ${themeClasses.textSubtle} mb-3 border-t ${themeClasses.border} pt-4`}>
-                  <span>{post.date}</span>
-                  <span>/</span>
-                  <span>{post.readTime} Read</span>
-                </div>
-                <h2 className={`text-2xl md:text-3xl font-serif mb-3 ${themeClasses.text} group-hover:${themeClasses.textMuted} transition-colors group-hover:underline decoration-1 underline-offset-4`}>{post.title}</h2>
-                <p className={`${themeClasses.textMuted} leading-relaxed`}>{post.excerpt}</p>
-              </div>
-            ))}
+          <div className="grid md:grid-cols-3 gap-8 md:gap-12 items-end mt-12">
+            <div className={`md:col-span-1 border-l ${themeClasses.border} pl-6`}>
+                <p className={`text-base md:text-lg ${themeClasses.textMuted} leading-relaxed font-light`}>
+                  {aboutData?.short_bio || "Mechanical Engineer focused on bridging the gap between rigorous analysis and functional aesthetics."}
+                </p>
+            </div>
+            <div className="md:col-span-2 flex flex-col sm:flex-row justify-start md:justify-end gap-4">
+              <button onClick={() => scrollToSection('projects')} className={`${isDark ? 'bg-white text-zinc-900 hover:bg-zinc-200' : 'bg-zinc-900 text-white hover:bg-zinc-800'} px-8 py-4 rounded-full font-medium transition-colors flex items-center justify-center gap-2 w-full sm:w-auto shadow-lg`}>
+                View Work <ArrowUpRight size={18} />
+              </button>
+              <button onClick={() => scrollToSection('contact')} className={`bg-transparent border ${isDark ? 'border-zinc-700 text-white hover:bg-zinc-900' : 'border-zinc-300 text-zinc-900 hover:bg-zinc-100'} px-8 py-4 rounded-full font-medium transition-colors w-full sm:w-auto`}>
+                Get in Touch
+              </button>
+            </div>
           </div>
         </div>
-      ) : (
-        // === MAIN PORTFOLIO ===
-        <>
-          {/* Hero Section */}
-          <section id="home" className="min-h-screen pt-32 md:pt-40 pb-20 px-6 flex flex-col justify-between relative z-10">
-            <div className="container mx-auto max-w-6xl">
-              <RevealOnScroll>
-                <div className="flex items-center gap-4 mb-6 opacity-60">
-                   <Ruler size={16} className={themeClasses.textMuted} />
-                   <span className={`font-mono text-xs uppercase tracking-[0.2em] ${themeClasses.textMuted}`}>System.Architecture.Design</span>
-                   <div className={`h-px w-24 ${isDark ? 'bg-zinc-700' : 'bg-zinc-300'}`}></div>
+
+        
+      </section>
+
+      {/* Marquee Skills */}
+      <Marquee isDark={isDark} items={skillsData} />
+
+      {/* About Section */}
+      <section id="about" className={`py-20 md:py-32 px-6 ${themeClasses.sectionBg} relative z-10 border-b ${themeClasses.border}`}>
+        <div className="container mx-auto max-w-6xl">
+          <RevealOnScroll>
+            <div className="grid md:grid-cols-2 gap-12 md:gap-20 items-center">
+              <div>
+                <span className={`font-mono text-xs uppercase tracking-widest ${themeClasses.textMuted} mb-4 block flex items-center gap-2`}>
+                    <span className={`w-2 h-2 ${isDark ? 'bg-zinc-500' : 'bg-zinc-400'} rounded-full`}></span> About Me
+                </span>
+                <h2 className={`text-3xl md:text-5xl font-serif mb-8 leading-tight ${themeClasses.text}`}>
+                  Applying <span className={`italic ${themeClasses.textMuted}`}>first principles</span> to solve complex physical problems.
+                </h2>
+                <div className={`space-y-6 text-lg ${themeClasses.textMuted} leading-relaxed font-light whitespace-pre-wrap mb-10`}>
+                  {aboutData?.long_bio || "I believe that great engineering is indistinguishable from art. Whether it's optimizing a thermal system or designing a chassis, the goal is always elegance in efficiency."}
                 </div>
-                <h1 className={`text-5xl sm:text-7xl md:text-9xl font-serif font-medium leading-[0.95] md:leading-[0.9] tracking-tight mb-8 ${themeClasses.text} relative`}>
-                  Design with <br/>
-                  <span className={`italic ${themeClasses.textSubtle} ml-2 md:ml-24 relative z-10`}>Precision.</span>
-                  <div className={`absolute bottom-2 left-2 md:left-24 w-32 h-1 ${isDark ? 'bg-zinc-800' : 'bg-zinc-300'} -z-10 skew-x-12`}></div>
-                </h1>
-              </RevealOnScroll>
-              
-              <div className="grid md:grid-cols-3 gap-8 md:gap-12 items-end mt-12">
-                <div className={`md:col-span-1 border-l ${themeClasses.border} pl-6`}>
-                   <p className={`text-base md:text-lg ${themeClasses.textMuted} leading-relaxed font-light`}>
-                     Mechanical Engineer focused on bridging the gap between <span className={`${themeClasses.text} font-medium`}>rigorous analysis</span> and <span className={`${themeClasses.text} font-medium`}>functional aesthetics</span>.
-                   </p>
-                </div>
-                <div className="md:col-span-2 flex flex-col sm:flex-row justify-start md:justify-end gap-4">
-                  <button onClick={() => scrollToSection('projects')} className={`${isDark ? 'bg-white text-zinc-900 hover:bg-zinc-200' : 'bg-zinc-900 text-white hover:bg-zinc-800'} px-8 py-4 rounded-full font-medium transition-colors flex items-center justify-center gap-2 w-full sm:w-auto shadow-lg`}>
-                    View Work <ArrowUpRight size={18} />
-                  </button>
-                  <button onClick={() => scrollToSection('contact')} className={`bg-transparent border ${isDark ? 'border-zinc-700 text-white hover:bg-zinc-900' : 'border-zinc-300 text-zinc-900 hover:bg-zinc-100'} px-8 py-4 rounded-full font-medium transition-colors w-full sm:w-auto`}>
-                    Get in Touch
-                  </button>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-y-6 gap-x-4">
+                    {[
+                        { label: "Birthday", value: aboutData?.birthday },
+                        { label: "Website", value: aboutData?.website },
+                        { label: "Phone", value: aboutData?.phone },
+                        { label: "City", value: aboutData?.city },
+                        { label: "Degree", value: aboutData?.degree },
+                        { label: "Email", value: aboutData?.email },
+                        { label: "Freelance", value: aboutData?.freelance_status },
+                    ].map((info, i) => (
+                        info.value && (
+                            <div key={i}>
+                                <span className={`block text-xs uppercase tracking-widest ${themeClasses.textMuted} mb-1 font-mono opacity-70`}>{info.label}:</span>
+                                <span className={`${themeClasses.text} font-medium`}>{info.value}</span>
+                            </div>
+                        )
+                    ))}
                 </div>
               </div>
-            </div>
-
-            <RevealOnScroll className="mt-12 md:mt-20">
-               <div 
-                  className={`w-full h-[300px] md:h-[500px] ${isDark ? 'bg-zinc-900' : 'bg-zinc-200'} rounded-sm overflow-hidden relative border ${themeClasses.border}`}
-                  style={{ transform: `translateY(${scrollY * 0.05}px)` }} 
-               >
-                  <img 
-                    src="https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?q=80&w=2670&auto=format&fit=crop" 
-                    className={`w-full h-full object-cover grayscale ${isDark ? 'opacity-50 mix-blend-overlay' : 'opacity-70 mix-blend-multiply'}`}
-                    alt="Mechanical Engineering"
-                  />
-                  {/* Technical Overlay */}
-                  <div className={`absolute inset-0 ${themeClasses.grid} opacity-20`}></div>
-                  <div className={`absolute bottom-4 right-4 font-mono text-xs ${themeClasses.textMuted}`}>FIG 1.0 // PROTOTYPING</div>
-                  <div className={`absolute top-4 left-4 font-mono text-xs ${themeClasses.textMuted}`}>SCALE 1:1</div>
-               </div>
-            </RevealOnScroll>
-          </section>
-
-          {/* Marquee Skills */}
-          <Marquee isDark={isDark} items={["CAD Design", "Thermodynamics", "Robotics", "FEA Analysis", "Prototyping", "Sustainable Design"]} />
-
-          {/* About Section */}
-          <section id="about" className={`py-20 md:py-32 px-6 ${themeClasses.sectionBg} relative z-10 border-b ${themeClasses.border}`}>
-            <div className="container mx-auto max-w-6xl">
-              <RevealOnScroll>
-                <div className="grid md:grid-cols-2 gap-12 md:gap-20 items-center">
-                  <div>
-                    <span className={`font-mono text-xs uppercase tracking-widest ${themeClasses.textMuted} mb-4 block flex items-center gap-2`}>
-                       <span className={`w-2 h-2 ${isDark ? 'bg-zinc-500' : 'bg-zinc-400'} rounded-full`}></span> About Me
-                    </span>
-                    <h2 className={`text-3xl md:text-5xl font-serif mb-8 leading-tight ${themeClasses.text}`}>
-                      Applying <span className={`italic ${themeClasses.textMuted}`}>first principles</span> to solve complex physical problems.
-                    </h2>
-                    <div className={`space-y-6 text-lg ${themeClasses.textMuted} leading-relaxed font-light`}>
-                      <p>
-                        I believe that great engineering is indistinguishable from art. Whether it's optimizing a thermal system or designing a chassis, the goal is always elegance in efficiency.
-                      </p>
-                      <p>
-                        With a background in robotics and material science, I approach every project with a holistic view of the system's lifecycle.
-                      </p>
-                    </div>
-                  </div>
-                  <div className="relative">
-                     <div 
-                       className={`aspect-[3/4] ${themeClasses.cardBg} rounded-sm overflow-hidden border ${themeClasses.border} relative`}
-                       style={{ transform: `translateY(${scrollY * -0.05}px)` }} 
-                     >
-                        <div className={`absolute inset-4 border ${isDark ? 'border-zinc-700/50' : 'border-zinc-300/50'}`}></div>
-                        <div className={`absolute top-2 right-2 w-2 h-2 border-t border-r ${themeClasses.text}`}></div>
-                        <div className={`absolute bottom-2 left-2 w-2 h-2 border-b border-l ${themeClasses.text}`}></div>
+              <div className="relative">
+                  <div 
+                    className={`aspect-[3/4] ${themeClasses.cardBg} rounded-sm overflow-hidden border ${themeClasses.border} relative`}
+                    style={{ transform: `translateY(${scrollY * -0.05}px)` }} 
+                  >
+                    <div className={`absolute inset-4 border ${isDark ? 'border-zinc-700/50' : 'border-zinc-300/50'}`}></div>
+                    <div className={`absolute top-2 right-2 w-2 h-2 border-t border-r ${themeClasses.text}`}></div>
+                    <div className={`absolute bottom-2 left-2 w-2 h-2 border-b border-l ${themeClasses.text}`}></div>
+                    
+                    {aboutData?.profile_image ? (
+                        <img src={aboutData.profile_image} alt="Profile" className="w-full h-full object-cover grayscale opacity-80 hover:opacity-100 hover:grayscale-0 duration-300 transition-opacity" />
+                    ) : (
                         <div className={`w-full h-full flex items-center justify-center ${themeClasses.textSubtle} font-mono`}>
                           IMG_PORTRAIT.RAW
                         </div>
+                    )}
+                  </div>
+              </div>
+            </div>
+          </RevealOnScroll>
+        </div>
+      </section>
+
+      {/* Skills Section */}
+      <section id="skills" className={`py-20 md:py-32 px-6 ${themeClasses.sectionBg} relative z-10 border-b ${themeClasses.border}`}>
+        <div className="container mx-auto max-w-6xl">
+          <RevealOnScroll>
+            <div className="flex justify-between items-end mb-12 md:mb-20">
+               <div>
+                  <span className={`font-mono text-xs ${themeClasses.textMuted} mb-2 block`}>COMPETENCIES</span>
+                  <h2 className={`text-4xl md:text-7xl font-serif ${themeClasses.text}`}>Technical Proficiency</h2>
+               </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-16 gap-y-8">
+               {skillsData.length > 0 ? skillsData.map((skill, index) => (
+                  <div key={skill.id} className="group">
+                     <div className="flex justify-between mb-2">
+                        <span className={`font-mono text-sm ${themeClasses.textSubtle} group-hover:${themeClasses.text} transition-colors`}>{skill.name}</span>
+                        <span className={`font-mono text-sm ${themeClasses.textMuted}`}>{skill.percentage}%</span>
+                     </div>
+                     <div className={`h-1 w-full ${isDark ? 'bg-zinc-800' : 'bg-zinc-200'} overflow-hidden relative`}>
+                        <div 
+                           className={`h-full ${isDark ? 'bg-zinc-400' : 'bg-zinc-600'} transition-all duration-1000 ease-out`}
+                           style={{ width: `${skill.percentage}%` }}
+                        ></div>
                      </div>
                   </div>
-                </div>
-              </RevealOnScroll>
+               )) : (
+                  <div className={`col-span-2 text-center py-10 ${themeClasses.textMuted}`}>No skills loaded.</div>
+               )}
             </div>
-          </section>
+          </RevealOnScroll>
+        </div>
+      </section>
 
-          {/* Projects - Masonry Grid */}
-          <section id="projects" className={`py-20 md:py-32 px-6 ${themeClasses.sectionBg} relative z-10`}>
-            <div className="container mx-auto max-w-6xl">
-              <div className={`flex justify-between items-end mb-12 md:mb-20 border-b ${themeClasses.border} pb-8`}>
-                <div>
-                   <span className={`font-mono text-xs ${themeClasses.textMuted} mb-2 block`}>SELECTED WORKS</span>
-                   <h2 className={`text-4xl md:text-7xl font-serif ${themeClasses.text}`}>Portfolio</h2>
+      {/* Education Section */}
+      <section id="education" className={`py-20 md:py-32 px-6 ${themeClasses.sectionBg} relative z-10 border-b ${themeClasses.border}`}>
+        <div className="container mx-auto max-w-6xl">
+          <RevealOnScroll>
+            <div className="flex items-center gap-4 mb-16">
+               <GraduationCap className={themeClasses.textMuted} size={24} />
+               <h2 className={`text-3xl md:text-5xl font-serif ${themeClasses.text}`}>Education</h2>
+            </div>
+
+            <div className={`relative border-l ${themeClasses.border} ml-3 md:ml-0 space-y-12`}>
+              {educationData.length > 0 ? educationData.map((edu) => (
+                <div key={edu.id} className="relative pl-8 md:pl-12 group">
+                  <div className={`absolute -left-[5px] top-2 w-[9px] h-[9px] ${themeClasses.bg} border ${isDark ? 'border-zinc-500' : 'border-zinc-400'} rounded-full group-hover:${isDark ? 'bg-white' : 'bg-zinc-900'} transition-colors`}></div>
+                  
+                  <div className="grid md:grid-cols-4 gap-4 items-baseline">
+                      <span className={`font-mono text-sm ${themeClasses.textMuted} md:col-span-1`}>{edu.year_range}</span>
+                      <div className="md:col-span-3">
+                        <h4 className={`text-xl md:text-2xl font-medium ${themeClasses.text} group-hover:${themeClasses.textMuted} transition-colors`}>{edu.degree}</h4>
+                        <div className={`${themeClasses.textSubtle} font-serif italic mb-2`}>{edu.institution}</div>
+                        <p className={`${themeClasses.textMuted} text-sm max-w-lg`}>{edu.description}</p>
+                      </div>
+                  </div>
                 </div>
-                <span className={`font-mono ${themeClasses.textSubtle} hidden md:block text-xl`}>(04)</span>
-              </div>
+              )) : (
+                <p className={`pl-8 ${themeClasses.textMuted}`}>Loading education history...</p>
+              )}
+            </div>
+          </RevealOnScroll>
+        </div>
+      </section>
 
-              <div className="grid md:grid-cols-2 gap-8 md:gap-x-16">
-                {projects.map((project, index) => (
-                  <RevealOnScroll key={index} className={index % 2 !== 0 ? "md:pt-32" : ""}>
-                    <div className="group cursor-pointer mb-12 md:mb-0">
-                      <div className={`aspect-[4/3] ${project.imageColor} rounded-sm overflow-hidden mb-6 relative transition-all duration-500 group-hover:opacity-90 border ${themeClasses.border}`}>
-                        <div className={`absolute top-4 right-4 font-mono text-[10px] ${themeClasses.textMuted} bg-black/10 px-2 py-1 backdrop-blur-sm rounded`}>{project.id}</div>
-                        <div className={`absolute inset-0 flex items-center justify-center font-serif text-2xl italic opacity-60 ${project.textColor}`}>
+      {/* Projects - Masonry Grid */}
+      <section id="projects" className={`py-20 md:py-32 px-6 ${themeClasses.sectionBg} relative z-10 border-b ${themeClasses.border}`}>
+        <div className="container mx-auto max-w-6xl">
+          <div className={`flex justify-between items-end mb-12 md:mb-20 border-b ${themeClasses.border} pb-8`}>
+            <div>
+                <span className={`font-mono text-xs ${themeClasses.textMuted} mb-2 block`}>SELECTED WORKS</span>
+                <h2 className={`text-4xl md:text-7xl font-serif ${themeClasses.text}`}>Portfolio</h2>
+            </div>
+            <span className={`font-mono ${themeClasses.textSubtle} hidden md:block text-xl`}>({projectsData.length.toString().padStart(2, '0')})</span>
+          </div>
+
+          <div className="grid md:grid-cols-2 gap-8 md:gap-x-16">
+            {projectsData.length > 0 ? projectsData.map((project, index) => (
+              <RevealOnScroll key={project.id} className={index % 2 !== 0 ? "md:pt-32" : ""}>
+                <div className="group cursor-pointer mb-12 md:mb-0">
+                  <div className={`aspect-[4/3] ${isDark ? 'bg-zinc-900' : 'bg-zinc-100'} rounded-sm overflow-hidden mb-6 relative transition-all duration-500 group-hover:opacity-90 border ${themeClasses.border}`}>
+                    <div className={`absolute top-4 right-4 font-mono text-[10px] ${themeClasses.textMuted} bg-black/10 px-2 py-1 backdrop-blur-sm rounded`}>PRJ-{project.id}</div>
+                    
+                    {project.image_url ? (
+                        <img src={project.image_url} alt={project.title} className="w-full h-full grayscale hover:grayscale-0 duration-300 transition-opacity object-cover" />
+                    ) : (
+                        <div className={`absolute inset-0 flex items-center justify-center font-serif text-2xl italic opacity-60 ${isDark ? 'text-zinc-600' : 'text-zinc-400'}`}>
                           {project.category}
                         </div>
-                        <div className="absolute inset-0 border border-white/10 m-4"></div>
-                      </div>
-                      <div className={`flex justify-between items-start border-t ${themeClasses.border} pt-4`}>
-                        <div>
-                          <h3 className={`text-2xl md:text-3xl font-serif mb-2 ${themeClasses.text} group-hover:${themeClasses.textMuted} transition-colors`}>{project.title}</h3>
-                          <p className={`${themeClasses.textMuted} max-w-sm text-sm md:text-base font-mono`}>{project.description}</p>
-                        </div>
-                        <ArrowUpRight className={`opacity-0 group-hover:opacity-100 transition-opacity ${themeClasses.text}`} />
-                      </div>
+                    )}
+                    
+                    <div className="absolute inset-0 border border-white/10 m-4 pointer-events-none"></div>
+                  </div>
+                  <div className={`flex justify-between items-start border-t ${themeClasses.border} pt-4`}>
+                    <div>
+                      <h3 className={`text-2xl md:text-3xl font-serif mb-2 ${themeClasses.text} group-hover:${themeClasses.textMuted} transition-colors`}>{project.title}</h3>
+                      <p className={`${themeClasses.textMuted} max-w-sm text-sm md:text-base font-mono`}>{project.category}</p>
                     </div>
-                  </RevealOnScroll>
-                ))}
-              </div>
-            </div>
-          </section>
-
-          {/* Experience Section */}
-          <section id="experience" className={`py-20 md:py-32 px-6 ${themeClasses.sectionBg} relative z-10 border-t ${themeClasses.border}`}>
-            <div className="container mx-auto max-w-6xl">
-              <RevealOnScroll>
-                <div className="flex items-center gap-4 mb-16">
-                   <Clock className={themeClasses.textMuted} size={24} />
-                   <h2 className={`text-3xl md:text-5xl font-serif ${themeClasses.text}`}>Professional History</h2>
+                    {project.project_link && (
+                        <a href={project.project_link} target="_blank" rel="noopener noreferrer">
+                            <ArrowUpRight className={`opacity-0 group-hover:opacity-100 transition-opacity ${themeClasses.text}`} />
+                        </a>
+                    )}
+                  </div>
                 </div>
+              </RevealOnScroll>
+            )) : (
+                <div className={`col-span-2 text-center py-20 ${themeClasses.textMuted}`}>No projects loaded.</div>
+            )}
+          </div>
+        </div>
+      </section>
 
-                <div className={`relative border-l ${themeClasses.border} ml-3 md:ml-0 space-y-16`}>
-                  {[
-                    { role: "Senior Mechanical Engineer", company: "TechDynamics", year: "2021-Pres", desc: "Leading assembly fixture automation." },
-                    { role: "Design Engineer", company: "Future Robotics", year: "2018-2021", desc: "End-effector design & FEA analysis." },
-                    { role: "Intern", company: "AeroParts Inc", year: "2017-2018", desc: "Quality control & GD&T drafting." }
-                  ].map((job, i) => (
-                    <div key={i} className="relative pl-8 md:pl-12 group">
-                      <div className={`absolute -left-[5px] top-2 w-[9px] h-[9px] ${themeClasses.bg} border ${isDark ? 'border-zinc-500' : 'border-zinc-400'} rounded-full group-hover:${isDark ? 'bg-white' : 'bg-zinc-900'} transition-colors`}></div>
-                      
-                      <div className="grid md:grid-cols-4 gap-4 items-baseline">
-                         <span className={`font-mono text-sm ${themeClasses.textMuted} md:col-span-1`}>{job.year}</span>
-                         <div className="md:col-span-3">
-                           <h4 className={`text-xl md:text-2xl font-medium ${themeClasses.text} group-hover:${themeClasses.textMuted} transition-colors`}>{job.role}</h4>
-                           <div className={`${themeClasses.textSubtle} font-serif italic mb-2`}>{job.company}</div>
-                           <p className={`${themeClasses.textMuted} text-sm max-w-lg`}>{job.desc}</p>
-                         </div>
+      {/* Experience Section */}
+      <section id="experience" className={`py-20 md:py-32 px-6 ${themeClasses.sectionBg} relative z-10 border-b ${themeClasses.border}`}>
+        <div className="container mx-auto max-w-6xl">
+          <RevealOnScroll>
+            <div className="flex items-center gap-4 mb-16">
+                <Clock className={themeClasses.textMuted} size={24} />
+                <h2 className={`text-3xl md:text-5xl font-serif ${themeClasses.text}`}>Professional History</h2>
+            </div>
+
+            <div className={`relative border-l ${themeClasses.border} ml-3 md:ml-0 space-y-16`}>
+              {experienceData.length > 0 ? experienceData.map((job) => (
+                <div key={job.id} className="relative pl-8 md:pl-12 group">
+                  <div className={`absolute -left-[5px] top-2 w-[9px] h-[9px] ${themeClasses.bg} border ${isDark ? 'border-zinc-500' : 'border-zinc-400'} rounded-full group-hover:${isDark ? 'bg-white' : 'bg-zinc-900'} transition-colors`}></div>
+                  
+                  <div className="grid md:grid-cols-4 gap-4 items-baseline">
+                      <span className={`font-mono text-sm ${themeClasses.textMuted} md:col-span-1`}>{job.year_range}</span>
+                      <div className="md:col-span-3">
+                        <h4 className={`text-xl md:text-2xl font-medium ${themeClasses.text} group-hover:${themeClasses.textMuted} transition-colors`}>{job.role}</h4>
+                        <div className={`${themeClasses.textSubtle} font-serif italic mb-2`}>{job.company}</div>
+                        <p className={`${themeClasses.textMuted} text-sm max-w-lg`}>{job.description}</p>
                       </div>
-                    </div>
+                  </div>
+                </div>
+              )) : (
+                <p className={`pl-8 ${themeClasses.textMuted}`}>Loading experience...</p>
+              )}
+            </div>
+          </RevealOnScroll>
+        </div>
+      </section>
+
+      {/* Thesis Section */}
+      <section id="thesis" className={`py-20 md:py-32 px-6 ${themeClasses.sectionBg} relative z-10 border-b ${themeClasses.border}`}>
+        <div className="container mx-auto max-w-6xl">
+          <RevealOnScroll>
+            <div className="flex items-center gap-4 mb-16 justify-end text-right">
+                <div>
+                  <h2 className={`text-3xl md:text-5xl font-serif ${themeClasses.text}`}>Research & Publications</h2>
+                  <span className={`font-mono text-xs ${themeClasses.textMuted}`}>ACADEMIC ARCHIVE</span>
+                </div>
+                <BookOpen className={themeClasses.textMuted} size={24} />
+            </div>
+
+            <div className="grid md:grid-cols-3 gap-6">
+                {thesisData.length > 0 ? thesisData.map((paper) => (
+                  <div key={paper.id} className={`group ${themeClasses.cardBg} p-8 rounded-sm border ${themeClasses.border} hover:${isDark ? 'border-zinc-600' : 'border-zinc-400'} transition-all hover:-translate-y-1 relative overflow-hidden shadow-sm`}>
+                      <div className="absolute top-0 right-0 p-4 opacity-10">
+                        <FileText size={40} />
+                      </div>
+                      <div className={`font-mono text-xs ${themeClasses.textSubtle} mb-6`}>DOC-{paper.id} // {paper.publication_date}</div>
+                      <h4 className={`text-xl font-serif ${themeClasses.text} mb-2`}>{paper.title}</h4>
+                      <p className={`text-sm ${themeClasses.textMuted} font-mono mb-8 line-clamp-3`}>{paper.description}</p>
+                      
+                      {paper.link && (
+                        <a href={paper.link} target="_blank" rel="noopener noreferrer" className={`flex items-center gap-2 text-xs font-bold uppercase tracking-widest ${themeClasses.textMuted} group-hover:${themeClasses.text} transition-colors`}>
+                          Access Document <Download size={14} />
+                        </a>
+                      )}
+                  </div>
+                )) : (
+                    <div className={`col-span-3 text-center ${themeClasses.textMuted}`}>No research papers found.</div>
+                )}
+            </div>
+          </RevealOnScroll>
+        </div>
+      </section>
+
+
+
+      {/* Contact / Footer */}
+      <section id="contact" className={`py-20 md:py-32 px-6 ${themeClasses.sectionBg} relative z-10`}>
+        <div className="container mx-auto max-w-6xl">
+          <RevealOnScroll>
+            <div className="grid md:grid-cols-2 gap-12 md:gap-20">
+              <div>
+                <h2 className={`text-4xl md:text-6xl font-serif mb-6 ${themeClasses.text}`}>Let's start a project.</h2>
+                <p className={`text-lg ${themeClasses.textMuted} mb-12`}>
+                  {aboutData?.freelance_status || "Available for freelance design engineering projects, consulting, and robotic systems development."}
+                </p>
+                <div className="space-y-6">
+                  {/* Dynamic Contact Links - Only showing 8 specific types */}
+                  {contactLinks.map((link, i) => (
+                    <a key={i} href={link.href || '#'} target={link.href && link.href.startsWith('http') ? '_blank' : '_self'} rel="noopener noreferrer" className={`flex items-center gap-4 ${themeClasses.textSubtle} hover:${themeClasses.text} transition-colors group`}>
+                      <link.icon size={20} className="group-hover:scale-110 transition-transform"/>
+                      <span>{link.text}</span>
+                    </a>
                   ))}
                 </div>
-              </RevealOnScroll>
-            </div>
-          </section>
+              </div>
 
-          {/* Thesis Section */}
-          <section id="thesis" className={`py-20 md:py-32 px-6 ${themeClasses.sectionBg} relative z-10 border-t ${themeClasses.border}`}>
-            <div className="container mx-auto max-w-6xl">
-              <RevealOnScroll>
-                <div className="flex items-center gap-4 mb-16 justify-end text-right">
-                   <div>
-                     <h2 className={`text-3xl md:text-5xl font-serif ${themeClasses.text}`}>Research & Publications</h2>
-                     <span className={`font-mono text-xs ${themeClasses.textMuted}`}>ACADEMIC ARCHIVE</span>
-                   </div>
-                   <BookOpen className={themeClasses.textMuted} size={24} />
-                </div>
-
-                <div className="grid md:grid-cols-3 gap-6">
-                   {[
-                      { title: "Additive Mfg. Optimization", type: "Master's Thesis", year: "2023", id: "DOC-01" },
-                      { title: "Hexapod Robot Kinematics", type: "Capstone", year: "2020", id: "DOC-02" },
-                      { title: "Sustainable Composites", type: "Paper", year: "2021", id: "DOC-03" }
-                    ].map((paper, i) => (
-                      <div key={i} className={`group ${themeClasses.cardBg} p-8 rounded-sm border ${themeClasses.border} hover:${isDark ? 'border-zinc-600' : 'border-zinc-400'} transition-all hover:-translate-y-1 relative overflow-hidden shadow-sm`}>
-                         <div className="absolute top-0 right-0 p-4 opacity-10">
-                            <FileText size={40} />
-                         </div>
-                         <div className={`font-mono text-xs ${themeClasses.textSubtle} mb-6`}>{paper.id} // {paper.year}</div>
-                         <h4 className={`text-xl font-serif ${themeClasses.text} mb-2`}>{paper.title}</h4>
-                         <p className={`text-sm ${themeClasses.textMuted} font-mono mb-8`}>{paper.type}</p>
-                         
-                         <button className={`flex items-center gap-2 text-xs font-bold uppercase tracking-widest ${themeClasses.textMuted} group-hover:${themeClasses.text} transition-colors`}>
-                            Download PDF <Download size={14} />
-                         </button>
+              <div className={`${themeClasses.cardBg} p-6 md:p-8 rounded-sm border ${themeClasses.border}`}>
+                <form className="space-y-6" onSubmit={handleContactSubmit}>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {['name', 'email'].map((field) => (
+                      <div key={field} className="space-y-2">
+                        <label className={`text-xs uppercase tracking-wider ${themeClasses.textMuted} font-mono`}>{field}</label>
+                        <input 
+                            type={field === 'email' ? 'email' : 'text'} 
+                            name={field}
+                            value={contactForm[field]}
+                            onChange={handleContactChange}
+                            required
+                            className={`w-full ${themeClasses.inputBg} border ${themeClasses.border} rounded-sm p-3 ${themeClasses.text} focus:outline-none focus:border-zinc-500 transition-colors font-sans`} 
+                            placeholder={field === 'email' ? 'jane@example.com' : 'Jane Doe'} 
+                        />
                       </div>
                     ))}
-                </div>
-              </RevealOnScroll>
-            </div>
-          </section>
-
-          {/* Recent Blogs Preview */}
-          <section id="blogs" className={`py-20 md:py-32 px-6 ${themeClasses.sectionAltBg} ${isDark ? 'text-white' : 'text-zinc-900'} relative z-10`}>
-            <div className="container mx-auto max-w-6xl">
-              <div className={`flex justify-between items-center mb-12 md:mb-16 border-b ${themeClasses.border} pb-6`}>
-                <h2 className="text-3xl md:text-5xl font-serif">Recent Writing</h2>
-                <button onClick={handleViewAllBlogs} className={`text-xs md:text-sm font-mono uppercase tracking-widest ${themeClasses.textMuted} hover:${themeClasses.text} transition-colors`}>View All</button>
+                  </div>
+                  <div className="space-y-2">
+                    <label className={`text-xs uppercase tracking-wider ${themeClasses.textMuted} font-mono`}>Subject</label>
+                    <input 
+                        type="text" 
+                        name="subject"
+                        value={contactForm.subject}
+                        onChange={handleContactChange}
+                        className={`w-full ${themeClasses.inputBg} border ${themeClasses.border} rounded-sm p-3 ${themeClasses.text} focus:outline-none focus:border-zinc-500 transition-colors font-sans`} 
+                        placeholder="Project Inquiry" 
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label className={`text-xs uppercase tracking-wider ${themeClasses.textMuted} font-mono`}>Message</label>
+                    <textarea 
+                        name="message"
+                        value={contactForm.message}
+                        onChange={handleContactChange}
+                        required
+                        rows="4" 
+                        className={`w-full ${themeClasses.inputBg} border ${themeClasses.border} rounded-sm p-3 ${themeClasses.text} focus:outline-none focus:border-zinc-500 transition-colors resize-none font-sans`} 
+                        placeholder="Tell me about your project needs..."
+                    ></textarea>
+                  </div>
+                  <button 
+                    disabled={sending}
+                    className={`w-full ${isDark ? 'bg-white text-zinc-900' : 'bg-zinc-900 text-white'} font-medium py-4 rounded-sm hover:opacity-90 transition-opacity flex items-center justify-center gap-2 font-mono text-sm uppercase tracking-widest disabled:opacity-50`}
+                  >
+                    {sending ? 'Sending...' : sentSuccess ? 'Message Sent!' : 'Send Message'} <Send size={18} />
+                  </button>
+                </form>
               </div>
-
-              <div className="grid md:grid-cols-2 gap-12">
-                {blogPosts.slice(0, 2).map((post) => (
-                  <div key={post.id} className="group cursor-pointer" onClick={handleViewAllBlogs}>
-                    <div className={`flex items-center gap-3 text-sm ${themeClasses.textMuted} font-mono mb-4`}>
-                      <span>{post.date}</span>
-                      <span className={`w-1 h-1 ${isDark ? 'bg-zinc-700' : 'bg-zinc-400'} rounded-full`}></span>
-                      <span className={themeClasses.textSubtle}>{post.category}</span>
-                    </div>
-                    <h3 className={`text-2xl md:text-3xl font-serif mb-4 ${themeClasses.text} group-hover:${themeClasses.textMuted} transition-colors`}>{post.title}</h3>
-                    <p className={`${themeClasses.textMuted} leading-relaxed mb-6`}>{post.excerpt}</p>
-                    <div className={`flex items-center gap-2 text-sm uppercase tracking-widest opacity-0 group-hover:opacity-100 transition-opacity transform translate-y-2 group-hover:translate-y-0 ${themeClasses.text}`}>
-                      Read Article <ChevronRight size={14} />
-                    </div>
-                  </div>
-                ))}
-              </div>
             </div>
-          </section>
-
-          {/* Contact / Footer */}
-          <section id="contact" className={`py-20 md:py-32 px-6 ${themeClasses.sectionBg} relative z-10`}>
-            <div className="container mx-auto max-w-6xl">
-              <RevealOnScroll>
-                <div className="grid md:grid-cols-2 gap-12 md:gap-20">
-                  <div>
-                    <h2 className={`text-4xl md:text-6xl font-serif mb-6 ${themeClasses.text}`}>Let's start a project.</h2>
-                    <p className={`text-lg ${themeClasses.textMuted} mb-12`}>
-                      Available for freelance design engineering projects, consulting, and robotic systems development.
-                    </p>
-                    <div className="space-y-6">
-                      {['contact@alexengineer.com', 'linkedin.com/in/alexeng', 'github.com/alexeng'].map((contact, i) => (
-                        <div key={i} className={`flex items-center gap-4 ${themeClasses.textSubtle}`}>
-                          {i === 0 ? <Mail size={20} /> : i === 1 ? <Linkedin size={20} /> : <Github size={20} />}
-                          <span>{contact}</span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-
-                  <div className={`${themeClasses.cardBg} p-6 md:p-8 rounded-sm border ${themeClasses.border}`}>
-                    <form className="space-y-6" onSubmit={(e) => e.preventDefault()}>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        {['Name', 'Email'].map((field) => (
-                          <div key={field} className="space-y-2">
-                            <label className={`text-xs uppercase tracking-wider ${themeClasses.textMuted} font-mono`}>{field}</label>
-                            <input type={field === 'Email' ? 'email' : 'text'} className={`w-full ${themeClasses.inputBg} border ${themeClasses.border} rounded-sm p-3 ${themeClasses.text} focus:outline-none focus:border-zinc-500 transition-colors font-sans`} placeholder={field === 'Email' ? 'jane@example.com' : 'Jane Doe'} />
-                          </div>
-                        ))}
-                      </div>
-                      <div className="space-y-2">
-                        <label className={`text-xs uppercase tracking-wider ${themeClasses.textMuted} font-mono`}>Subject</label>
-                        <input type="text" className={`w-full ${themeClasses.inputBg} border ${themeClasses.border} rounded-sm p-3 ${themeClasses.text} focus:outline-none focus:border-zinc-500 transition-colors font-sans`} placeholder="Project Inquiry" />
-                      </div>
-                      <div className="space-y-2">
-                        <label className={`text-xs uppercase tracking-wider ${themeClasses.textMuted} font-mono`}>Message</label>
-                        <textarea rows="4" className={`w-full ${themeClasses.inputBg} border ${themeClasses.border} rounded-sm p-3 ${themeClasses.text} focus:outline-none focus:border-zinc-500 transition-colors resize-none font-sans`} placeholder="Tell me about your project needs..."></textarea>
-                      </div>
-                      <button className={`w-full ${isDark ? 'bg-white text-zinc-900' : 'bg-zinc-900 text-white'} font-medium py-4 rounded-sm hover:opacity-90 transition-opacity flex items-center justify-center gap-2 font-mono text-sm uppercase tracking-widest`}>
-                        Send Message <Send size={18} />
-                      </button>
-                    </form>
-                  </div>
-                </div>
-                
-                <div className={`mt-20 pt-8 border-t ${themeClasses.border} flex flex-col md:flex-row justify-between text-sm ${themeClasses.textSubtle} font-mono gap-4 items-center`}>
-                  <span>© 2024 Farhan Shahriar</span>
-                  <span>Made with React & Tailwind</span>
-                </div>
-              </RevealOnScroll>
+            
+            <div className={`mt-20 pt-8 border-t ${themeClasses.border} flex flex-col md:flex-row justify-between text-sm ${themeClasses.textSubtle} font-mono gap-4 items-center`}>
+              <span>© {new Date().getFullYear()} {aboutData?.name || "Alex Engineer"}</span>
+              <span>Made with React & Flask</span>
             </div>
-          </section>
-        </>
-      )}
+          </RevealOnScroll>
+        </div>
+      </section>
     </div>
   );
 };
