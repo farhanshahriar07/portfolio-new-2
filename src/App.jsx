@@ -497,7 +497,7 @@ const App = () => {
                   {aboutData?.long_bio || "I believe that great engineering is indistinguishable from art. Whether it's optimizing a thermal system or designing a chassis, the goal is always elegance in efficiency."}
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-y-6 gap-x-4">
+                {/* <div className="grid grid-cols-1 sm:grid-cols-2 gap-y-6 gap-x-4">
                     {[
                         { label: "Birthday", value: aboutData?.birthday },
                         { label: "Website", value: aboutData?.website },
@@ -514,7 +514,7 @@ const App = () => {
                             </div>
                         )
                     ))}
-                </div>
+                </div> */}
               </div>
               <div className="relative">
                   <div 
