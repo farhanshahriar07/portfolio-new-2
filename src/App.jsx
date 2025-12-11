@@ -3,7 +3,8 @@ import {
   Menu, X, Linkedin, Github, Mail, Download, ArrowUpRight, 
   Cpu, Thermometer, Box, Zap, FileText, BookOpen, ArrowLeft, 
   Clock, ChevronRight, Send, Settings, Ruler, GitCommit,
-  Moon, Sun, Loader, GraduationCap, Facebook, Instagram, Twitter, MessageCircle, Globe
+  Moon, Sun, Loader, GraduationCap, Facebook, Instagram, Twitter, 
+  MessageCircle, Globe, Code, Terminal, PenTool, Database, Layers, Wrench, Server, Briefcase, Building2, ArrowUp, Award
 } from 'lucide-react';
 
 // --- Configuration ---
@@ -14,7 +15,9 @@ const API_BASE_URL = 'https://adnan-backend-eyxe.onrender.com/api';
 // --- Styles & Fonts ---
 const styles = `
   @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500&family=Inter:wght@300;400;500;600&family=Playfair+Display:ital,wght@0,400;0,600;0,800;1,400&display=swap');
-  
+  /* Import Devicon for colored tech icons */
+  @import url("https://cdn.jsdelivr.net/gh/devicons/devicon@latest/devicon.min.css");
+
   .font-serif { font-family: 'Playfair Display', serif; }
   .font-sans { font-family: 'Inter', sans-serif; }
   .font-mono { font-family: 'JetBrains Mono', monospace; }
@@ -27,7 +30,16 @@ const styles = `
     100% { transform: translateX(-100%); }
   }
   .animate-marquee {
-    animation: marquee 30s linear infinite;
+    animation: marquee 60s linear infinite; /* Slowed down to 60s */
+  }
+  
+  /* Filter for dark mode icons to make black icons visible */
+  .dark-icon-glow {
+    filter: drop-shadow(0 0 2px rgba(255, 255, 255, 0.9));
+  }
+
+  .dark-logo-glow {
+    filter: drop-shadow(0 0 2px rgba(255, 255, 255, 0.15));
   }
   
   .bg-grid-dark {
@@ -98,6 +110,7 @@ const App = () => {
   const [projectsData, setProjectsData] = useState([]);
   const [experienceData, setExperienceData] = useState([]);
   const [thesisData, setThesisData] = useState([]);
+  const [achievementsData, setAchievementsData] = useState([]);
   
   // Contact Form State
   const [contactForm, setContactForm] = useState({ name: '', email: '', subject: '', message: '' });
@@ -110,17 +123,22 @@ const App = () => {
     setTheme(prev => prev === 'dark' ? 'light' : 'dark');
   };
 
+  const scrollToTop = () => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
   // --- Fetch API Data ---
   useEffect(() => {
     const fetchAllData = async () => {
       try {
-        const [aboutRes, skillsRes, eduRes, projectsRes, expRes, thesisRes] = await Promise.all([
+        const [aboutRes, skillsRes, eduRes, projectsRes, expRes, thesisRes, achievementsRes] = await Promise.all([
           fetch(`${API_BASE_URL}/about`),
           fetch(`${API_BASE_URL}/skills`),
           fetch(`${API_BASE_URL}/education`),
           fetch(`${API_BASE_URL}/projects`),
           fetch(`${API_BASE_URL}/experience`),
-          fetch(`${API_BASE_URL}/thesis`)
+          fetch(`${API_BASE_URL}/thesis`),
+          fetch(`${API_BASE_URL}/achievements`)
         ]);
 
         if (aboutRes.ok) setAboutData(await aboutRes.json());
@@ -129,6 +147,7 @@ const App = () => {
         if (projectsRes.ok) setProjectsData(await projectsRes.json());
         if (expRes.ok) setExperienceData(await expRes.json());
         if (thesisRes.ok) setThesisData(await thesisRes.json());
+        if (achievementsRes.ok) setAchievementsData(await achievementsRes.json());
       } catch (error) {
         console.error("Failed to fetch data:", error);
       } finally {
@@ -143,7 +162,7 @@ const App = () => {
   useEffect(() => {
     const handleScroll = () => {
       setScrollY(window.scrollY);
-      const sections = ['home', 'about', 'skills', 'education', 'projects', 'experience', 'thesis', 'contact'];
+      const sections = ['home', 'about', 'skills', 'education', 'projects', 'achievements', 'experience', 'thesis', 'contact'];
       for (const section of sections) {
         const element = document.getElementById(section);
         if (element) {
@@ -218,6 +237,79 @@ const App = () => {
 
   const contactLinks = getContactLinks();
 
+  // --- Helper to get Skill Asset (Devicon > Simple Icons > Lucide) ---
+  const getSkillAsset = (skillName) => {
+    const lower = skillName.toLowerCase();
+    
+    // 1. Devicon Mapping (Preferred for Dev Tools - Colored)
+    // Check available icons at https://devicon.dev/
+    const deviconMap = [
+        { term: 'python', class: 'devicon-python-plain colored' },
+        { term: 'java', class: 'devicon-java-plain colored' }, // catch 'java' before 'javascript' if strict, but includes works fine here usually
+        { term: 'js', class: 'devicon-javascript-plain colored' },
+        { term: 'javascript', class: 'devicon-javascript-plain colored' },
+        { term: 'react', class: 'devicon-react-original colored' },
+        { term: 'html', class: 'devicon-html5-plain colored' },
+        { term: 'css', class: 'devicon-css3-plain colored' },
+        { term: 'c++', class: 'devicon-cplusplus-plain colored' },
+        { term: 'cpp', class: 'devicon-cplusplus-plain colored' },
+        { term: 'c#', class: 'devicon-csharp-plain colored' },
+        { term: 'git', class: 'devicon-git-plain colored' },
+        { term: 'docker', class: 'devicon-docker-plain colored' },
+        { term: 'flask', class: 'devicon-flask-original colored' },
+        { term: 'matlab', class: 'devicon-matlab-plain colored' },
+        { term: 'arduino', class: 'devicon-arduino-plain colored' },
+        { term: 'latex', class: 'devicon-latex-original colored' },
+        { term: 'linux', class: 'devicon-linux-plain colored' },
+        { term: 'ubuntu', class: 'devicon-ubuntu-plain colored' },
+        { term: 'blender', class: 'devicon-blender-original colored' },
+        { term: 'photoshop', class: 'devicon-photoshop-plain colored' },
+        { term: 'illustrator', class: 'devicon-illustrator-plain colored' },
+        { term: 'figma', class: 'devicon-figma-plain colored' },
+        { term: 'node', class: 'devicon-nodejs-plain colored' },
+        { term: 'tailwind', class: 'devicon-tailwindcss-original colored' },
+    ];
+
+    const deviconMatch = deviconMap.find(m => lower.includes(m.term));
+    if (deviconMatch) {
+        return { type: 'devicon', className: deviconMatch.class };
+    }
+
+    // 2. Simple Icons (Preferred for Engineering/CAD Brands missing in Devicon)
+    const brandMap = [
+      { term: 'solidworks', slug: 'dassaultsystemes' },
+      { term: 'ansys', slug: 'ansys' },
+      { term: 'autocad', slug: 'autodesk' },
+      { term: 'fusion', slug: 'autodesk' },
+      // Generic 'office' or 'microsoft office' mapping
+      { term: 'microsoft office', slug: 'microsoft' }, 
+      { term: 'office', slug: 'microsoft365' }, 
+      { term: 'word', slug: 'microsoftword' },
+      { term: 'excel', slug: 'microsoftexcel' },
+      { term: 'powerpoint', slug: 'microsoftpowerpoint' },
+    ];
+
+    const brandMatch = brandMap.find(brand => lower.includes(brand.term));
+    if (brandMatch) {
+      return { 
+        type: 'image', 
+        src: `https://cdn.simpleicons.org/${brandMatch.slug}` 
+      };
+    }
+
+    // 3. Lucide Fallbacks (Generic)
+    if (lower.includes('script') || lower.includes('code')) return { type: 'icon', component: Terminal };
+    if (lower.includes('design') || lower.includes('cad')) return { type: 'icon', component: PenTool };
+    if (lower.includes('analysis') || lower.includes('fea')) return { type: 'icon', component: Thermometer };
+    if (lower.includes('circuit') || lower.includes('electronic') || lower.includes('pcb')) return { type: 'icon', component: Zap };
+    if (lower.includes('database') || lower.includes('sql') || lower.includes('mongo')) return { type: 'icon', component: Database };
+    if (lower.includes('sys') || lower.includes('server')) return { type: 'icon', component: Server };
+    if (lower.includes('mech') || lower.includes('robot') || lower.includes('engineer')) return { type: 'icon', component: Wrench };
+    if (lower.includes('manage') || lower.includes('lead')) return { type: 'icon', component: Layers };
+    
+    return { type: 'icon', component: Cpu }; // Default
+  };
+
   // --- Theme Colors Helper ---
   const themeClasses = {
     bg: isDark ? 'bg-zinc-950' : 'bg-stone-50',
@@ -244,28 +336,6 @@ const App = () => {
       </div>
     );
   }
-
-  // --- Static Blog Data (Frontend Only as per your models) ---
-  const blogPosts = [
-    {
-      id: 1,
-      title: "The Future of Generative Design in CAD",
-      date: "Oct 15, 2023",
-      category: "Trends",
-      excerpt: "How AI is reshaping the way mechanical engineers approach topology optimization.",
-      readTime: "5 min",
-      color: isDark ? "bg-emerald-900/20" : "bg-emerald-100"
-    },
-    {
-      id: 2,
-      title: "Understanding GD&T Pitfalls",
-      date: "Sep 28, 2023",
-      category: "Tutorial",
-      excerpt: "A deep dive into Geometric Dimensioning and Tolerancing modifiers.",
-      readTime: "8 min",
-      color: isDark ? "bg-amber-900/20" : "bg-amber-100"
-    }
-  ];
 
   return (
     <div className={`min-h-screen ${themeClasses.bg} ${themeClasses.text} font-sans transition-colors duration-500 overflow-x-hidden relative`}>
@@ -300,7 +370,7 @@ const App = () => {
           </div>
           
           <div className="hidden md:flex items-center gap-1">
-            {['Home', 'About', 'Skills', 'Education', 'Projects', 'Experience', 'Thesis'].map((item) => (
+            {['Home', 'About', 'Skills', 'Education', 'Projects', 'Achievements', 'Experience', 'Thesis'].map((item) => (
               <button
                 key={item}
                 onClick={() => scrollToSection(item.toLowerCase())}
@@ -346,7 +416,7 @@ const App = () => {
       {/* Mobile Menu Overlay */}
       <div className={`fixed inset-0 ${themeClasses.bg} z-40 pt-32 px-6 md:hidden transition-all duration-500 transform ${isMenuOpen ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-full pointer-events-none'}`}>
         <div className="flex flex-col gap-8 text-center">
-          {['Home', 'About', 'Skills', 'Education', 'Projects', 'Experience', 'Thesis', 'Contact'].map((item) => (
+          {['Home', 'About', 'Skills', 'Education', 'Projects', 'Achievements', 'Experience', 'Thesis', 'Contact'].map((item) => (
             <button 
               key={item}
               onClick={() => scrollToSection(item.toLowerCase())}
@@ -473,29 +543,38 @@ const App = () => {
       <section id="skills" className={`py-20 md:py-32 px-6 ${themeClasses.sectionBg} relative z-10 border-b ${themeClasses.border}`}>
         <div className="container mx-auto max-w-6xl">
           <RevealOnScroll>
-            <div className="flex justify-between items-end mb-12 md:mb-20">
-               <div>
-                  <span className={`font-mono text-xs ${themeClasses.textMuted} mb-2 block`}>COMPETENCIES</span>
-                  <h2 className={`text-4xl md:text-7xl font-serif ${themeClasses.text}`}>Technical Proficiency</h2>
-               </div>
+            <div className="flex items-center gap-4 mb-16">
+               <Cpu className={themeClasses.textMuted} size={24} />
+               <h2 className={`text-3xl md:text-5xl font-serif ${themeClasses.text}`}>Technical Proficiency</h2>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-16 gap-y-8">
-               {skillsData.length > 0 ? skillsData.map((skill, index) => (
-                  <div key={skill.id} className="group">
-                     <div className="flex justify-between mb-2">
-                        <span className={`font-mono text-sm ${themeClasses.textSubtle} group-hover:${themeClasses.text} transition-colors`}>{skill.name}</span>
-                        <span className={`font-mono text-sm ${themeClasses.textMuted}`}>{skill.percentage}%</span>
-                     </div>
-                     <div className={`h-1 w-full ${isDark ? 'bg-zinc-800' : 'bg-zinc-200'} overflow-hidden relative`}>
-                        <div 
-                           className={`h-full ${isDark ? 'bg-zinc-400' : 'bg-zinc-600'} transition-all duration-1000 ease-out`}
-                           style={{ width: `${skill.percentage}%` }}
-                        ></div>
-                     </div>
-                  </div>
-               )) : (
-                  <div className={`col-span-2 text-center py-10 ${themeClasses.textMuted}`}>No skills loaded.</div>
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+               {skillsData.length > 0 ? skillsData.map((skill, index) => {
+                  const asset = getSkillAsset(skill.name);
+                  
+                  return (
+                    <div key={skill.id || index} className={`p-6 border ${themeClasses.border} rounded-sm flex flex-col items-center justify-center gap-4 group hover:bg-zinc-500/5 transition-colors`}>
+                        {asset.type === 'devicon' ? (
+                            <i className={`${asset.className} text-4xl transition-transform group-hover:scale-110`}></i>
+                        ) : asset.type === 'image' ? (
+                            <img 
+                                src={asset.src} 
+                                alt={skill.name} 
+                                className={`w-8 h-8 object-contain transition-transform group-hover:scale-110 ${isDark ? 'dark-icon-glow' : ''}`} 
+                            />
+                        ) : (
+                            <asset.component 
+                                size={32} 
+                                className={`${themeClasses.textSubtle} group-hover:${themeClasses.text} transition-colors group-hover:scale-110`} 
+                            />
+                        )}
+                        <span className={`font-mono text-sm uppercase tracking-wide text-center ${themeClasses.text}`}>
+                          {skill.name}
+                        </span>
+                    </div>
+                  );
+               }) : (
+                  <div className={`col-span-full text-center py-10 ${themeClasses.textMuted}`}>No skills loaded.</div>
                )}
             </div>
           </RevealOnScroll>
@@ -516,11 +595,28 @@ const App = () => {
                 <div key={edu.id} className="relative pl-8 md:pl-12 group">
                   <div className={`absolute -left-[5px] top-2 w-[9px] h-[9px] ${themeClasses.bg} border ${isDark ? 'border-zinc-500' : 'border-zinc-400'} rounded-full group-hover:${isDark ? 'bg-white' : 'bg-zinc-900'} transition-colors`}></div>
                   
-                  <div className="grid md:grid-cols-4 gap-4 items-baseline">
-                      <span className={`font-mono text-sm ${themeClasses.textMuted} md:col-span-1`}>{edu.year_range}</span>
+                  {/* Updated Layout for Education Item */}
+                  <div className="grid md:grid-cols-4 gap-4 items-start">
+                      {/* Left Column: University Logo Placeholder */}
+                      <div className={`md:col-span-1 flex justify-center md:justify-start`}>
+                          <div className={`w-28 h-28 rounded-xl border ${themeClasses.border} ${isDark ? 'bg-zinc-800/50 dark-logo-glow' : 'bg-white'} flex items-center justify-center overflow-hidden`}>
+                             {edu.logo_url ? (
+                                <img src={edu.logo_url} alt={edu.institution} className="w-full h-full object-contain" />
+                             ) : (
+                                <Building2 size={32} className={themeClasses.textSubtle} />
+                             )}
+                          </div>
+                      </div>
+                      
+                      {/* Right Column: Content */}
                       <div className="md:col-span-3">
                         <h4 className={`text-xl md:text-2xl font-medium ${themeClasses.text} group-hover:${themeClasses.textMuted} transition-colors`}>{edu.degree}</h4>
-                        <div className={`${themeClasses.textSubtle} font-serif italic mb-2`}>{edu.institution}</div>
+                        
+                        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-baseline mb-2 gap-1">
+                            <div className={`${themeClasses.textSubtle} font-serif italic`}>{edu.institution}</div>
+                            <span className={`font-mono text-sm ${themeClasses.textMuted} whitespace-nowrap`}>{edu.year_range}</span>
+                        </div>
+                        
                         <p className={`${themeClasses.textMuted} text-sm max-w-lg`}>{edu.description}</p>
                       </div>
                   </div>
@@ -536,48 +632,81 @@ const App = () => {
       {/* Projects - Masonry Grid */}
       <section id="projects" className={`py-20 md:py-32 px-6 ${themeClasses.sectionBg} relative z-10 border-b ${themeClasses.border}`}>
         <div className="container mx-auto max-w-6xl">
-          <div className={`flex justify-between items-end mb-12 md:mb-20 border-b ${themeClasses.border} pb-8`}>
-            <div>
-                <span className={`font-mono text-xs ${themeClasses.textMuted} mb-2 block`}>SELECTED WORKS</span>
-                <h2 className={`text-4xl md:text-7xl font-serif ${themeClasses.text}`}>Portfolio</h2>
+          <RevealOnScroll>
+            {/* Standardized Header */}
+            <div className="flex items-center gap-4 mb-16">
+               <Briefcase className={themeClasses.textMuted} size={24} />
+               <h2 className={`text-3xl md:text-5xl font-serif ${themeClasses.text}`}>Portfolio</h2>
             </div>
-            <span className={`font-mono ${themeClasses.textSubtle} hidden md:block text-xl`}>({projectsData.length.toString().padStart(2, '0')})</span>
-          </div>
 
-          <div className="grid md:grid-cols-2 gap-8 md:gap-x-16">
-            {projectsData.length > 0 ? projectsData.map((project, index) => (
-              <RevealOnScroll key={project.id} className={index % 2 !== 0 ? "md:pt-32" : ""}>
-                <div className="group cursor-pointer mb-12 md:mb-0">
-                  <div className={`aspect-[4/3] ${isDark ? 'bg-zinc-900' : 'bg-zinc-100'} rounded-sm overflow-hidden mb-6 relative transition-all duration-500 group-hover:opacity-90 border ${themeClasses.border}`}>
-                    <div className={`absolute top-4 right-4 font-mono text-[10px] ${themeClasses.textMuted} bg-black/10 px-2 py-1 backdrop-blur-sm rounded`}>PRJ-{project.id}</div>
-                    
-                    {project.image_url ? (
-                        <img src={project.image_url} alt={project.title} className="w-full h-full grayscale hover:grayscale-0 duration-300 transition-opacity object-cover" />
-                    ) : (
-                        <div className={`absolute inset-0 flex items-center justify-center font-serif text-2xl italic opacity-60 ${isDark ? 'text-zinc-600' : 'text-zinc-400'}`}>
-                          {project.category}
-                        </div>
-                    )}
-                    
-                    <div className="absolute inset-0 border border-white/10 m-4 pointer-events-none"></div>
-                  </div>
-                  <div className={`flex justify-between items-start border-t ${themeClasses.border} pt-4`}>
-                    <div>
-                      <h3 className={`text-2xl md:text-3xl font-serif mb-2 ${themeClasses.text} group-hover:${themeClasses.textMuted} transition-colors`}>{project.title}</h3>
-                      <p className={`${themeClasses.textMuted} max-w-sm text-sm md:text-base font-mono`}>{project.category}</p>
+            <div className="grid md:grid-cols-2 gap-8 md:gap-x-16">
+              {projectsData.length > 0 ? projectsData.map((project, index) => (
+                <RevealOnScroll key={project.id} className={index % 2 !== 0 ? "md:pt-32" : ""}>
+                  <div className="group cursor-pointer mb-12 md:mb-0">
+                    <div className={`aspect-[4/3] ${isDark ? 'bg-zinc-900' : 'bg-zinc-100'} rounded-sm overflow-hidden mb-6 relative transition-all duration-500 group-hover:opacity-90 border ${themeClasses.border}`}>
+                      <div className={`absolute top-4 right-4 font-mono text-[10px] ${themeClasses.textMuted} bg-black/10 px-2 py-1 backdrop-blur-sm rounded`}>PRJ-{project.id}</div>
+                      
+                      {project.image_url ? (
+                          <img src={project.image_url} alt={project.title} className="w-full h-full grayscale hover:grayscale-0 duration-300 transition-opacity object-cover" />
+                      ) : (
+                          <div className={`absolute inset-0 flex items-center justify-center font-serif text-2xl italic opacity-60 ${isDark ? 'text-zinc-600' : 'text-zinc-400'}`}>
+                            {project.category}
+                          </div>
+                      )}
+                      
+                      <div className="absolute inset-0 border border-white/10 m-4 pointer-events-none"></div>
                     </div>
-                    {project.project_link && (
-                        <a href={project.project_link} target="_blank" rel="noopener noreferrer">
-                            <ArrowUpRight className={`opacity-0 group-hover:opacity-100 transition-opacity ${themeClasses.text}`} />
-                        </a>
-                    )}
+                    <div className={`flex justify-between items-start border-t ${themeClasses.border} pt-4`}>
+                      <div>
+                        <h3 className={`text-2xl md:text-3xl font-serif mb-2 ${themeClasses.text} group-hover:${themeClasses.textMuted} transition-colors`}>{project.title}</h3>
+                        <p className={`${themeClasses.textMuted} max-w-sm text-sm md:text-base font-mono`}>{project.category}</p>
+                      </div>
+                      {project.project_link && (
+                          <a href={project.project_link} target="_blank" rel="noopener noreferrer">
+                              <ArrowUpRight className={`opacity-0 group-hover:opacity-100 transition-opacity ${themeClasses.text}`} />
+                          </a>
+                      )}
+                    </div>
                   </div>
+                </RevealOnScroll>
+              )) : (
+                  <div className={`col-span-2 text-center py-20 ${themeClasses.textMuted}`}>No projects loaded.</div>
+              )}
+            </div>
+          </RevealOnScroll>
+        </div>
+      </section>
+
+      {/* Achievements Section */}
+      <section id="achievements" className={`py-20 md:py-32 px-6 ${themeClasses.sectionBg} relative z-10 border-b ${themeClasses.border}`}>
+        <div className="container mx-auto max-w-6xl">
+          <RevealOnScroll>
+            <div className="flex items-center gap-4 mb-16">
+                <Award className={themeClasses.textMuted} size={24} />
+                <h2 className={`text-3xl md:text-5xl font-serif ${themeClasses.text}`}>Achievements</h2>
+            </div>
+
+            <div className="grid md:grid-cols-2 gap-8">
+              {achievementsData.length > 0 ? achievementsData.map((achievement) => (
+                <div key={achievement.id} className={`group ${themeClasses.cardBg} p-8 rounded-sm border ${themeClasses.border} hover:${isDark ? 'border-zinc-600' : 'border-zinc-400'} transition-all hover:-translate-y-1 relative`}>
+                   <div className="flex justify-between items-start mb-4">
+                      <h4 className={`text-xl font-serif ${themeClasses.text} group-hover:${themeClasses.textMuted} transition-colors`}>{achievement.title}</h4>
+                      {/* Assuming 'year' or 'date' is present in your backend response for achievements */}
+                      {(achievement.year || achievement.date) && (
+                        <span className={`font-mono text-xs ${themeClasses.textMuted} border ${themeClasses.border} px-2 py-1 rounded-full`}>{achievement.year || achievement.date}</span>
+                      )}
+                   </div>
+                   {/* Assuming 'organization' or similar field exists */}
+                   {achievement.organization && (
+                     <p className={`${themeClasses.textSubtle} font-medium mb-2`}>{achievement.organization}</p>
+                   )}
+                   <p className={`${themeClasses.textMuted} text-sm leading-relaxed`}>{achievement.description}</p>
                 </div>
-              </RevealOnScroll>
-            )) : (
-                <div className={`col-span-2 text-center py-20 ${themeClasses.textMuted}`}>No projects loaded.</div>
-            )}
-          </div>
+              )) : (
+                <div className={`col-span-2 text-center py-10 ${themeClasses.textMuted}`}>No achievements loaded.</div>
+              )}
+            </div>
+          </RevealOnScroll>
         </div>
       </section>
 
@@ -665,7 +794,7 @@ const App = () => {
                   {contactLinks.map((link, i) => (
                     <a key={i} href={link.href || '#'} target={link.href && link.href.startsWith('http') ? '_blank' : '_self'} rel="noopener noreferrer" className={`flex items-center gap-4 ${themeClasses.textSubtle} hover:${themeClasses.text} transition-colors group`}>
                       <link.icon size={20} className="group-hover:scale-110 transition-transform"/>
-                      <span>{link.text}</span>
+                      <span>{link.href}</span>
                     </a>
                   ))}
                 </div>
@@ -729,6 +858,17 @@ const App = () => {
           </RevealOnScroll>
         </div>
       </section>
+      
+      {/* Scroll to Top Button */}
+      <button
+        onClick={scrollToTop}
+        className={`fixed bottom-8 right-8 p-3 rounded-full shadow-lg transition-all duration-300 z-50 ${
+          scrollY > 500 ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10 pointer-events-none'
+        } ${isDark ? 'bg-white text-zinc-900 hover:bg-zinc-200' : 'bg-zinc-900 text-white hover:bg-zinc-800'}`}
+        aria-label="Scroll to top"
+      >
+        <ArrowUp size={24} />
+      </button>
     </div>
   );
 };
