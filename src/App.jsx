@@ -450,9 +450,9 @@ const App = () => {
                 <div className={`h-px w-24 ${isDark ? 'bg-zinc-700' : 'bg-zinc-300'}`}></div>
             </div>
             <h1 className={`text-5xl sm:text-7xl md:text-9xl font-serif font-medium leading-[0.95] md:leading-[0.9] tracking-tight mb-8 ${themeClasses.text} relative`}>
-              {aboutData?.name ? aboutData.name.split(' ')[0] : 'Design'} <br/>
+              {aboutData?.name ? aboutData.name.split(' ')[0] + ' ' + aboutData.name.split(' ')[1] : 'Md. Adnan'} <br/>
               <span className={`italic ${themeClasses.textSubtle} ml-2 md:ml-24 relative z-10`}>
-                {aboutData?.name ? aboutData.name.split(' ').slice(1).join(' ') : 'Precision.'}
+              {aboutData?.name ? aboutData.name.split(' ').slice(2).join(' ') : 'Ahmed.'}
               </span>
               <div className={`absolute bottom-2 left-2 md:left-24 w-32 h-1 ${isDark ? 'bg-zinc-800' : 'bg-zinc-300'} -z-10 skew-x-12`}></div>
             </h1>
@@ -716,7 +716,7 @@ const App = () => {
           <RevealOnScroll>
             <div className="flex items-center gap-4 mb-16">
                 <Clock className={themeClasses.textMuted} size={24} />
-                <h2 className={`text-3xl md:text-5xl font-serif ${themeClasses.text}`}>Professional History</h2>
+                <h2 className={`text-3xl md:text-5xl font-serif ${themeClasses.text}`}>Work Experience</h2>
             </div>
 
             <div className={`relative border-l ${themeClasses.border} ml-3 md:ml-0 space-y-16`}>
@@ -780,7 +780,7 @@ const App = () => {
 
 
       {/* Contact / Footer */}
-      <section id="contact" className={`py-20 md:py-32 px-6 ${themeClasses.sectionBg} relative z-10`}>
+      <section id="contact" className={`py-20 md:py-16 px-6 ${themeClasses.sectionBg} relative z-10`}>
         <div className="container mx-auto max-w-6xl">
           <RevealOnScroll>
             <div className="grid md:grid-cols-2 gap-12 md:gap-20">
