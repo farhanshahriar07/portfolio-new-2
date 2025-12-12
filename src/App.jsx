@@ -30,16 +30,15 @@ const styles = `
     100% { transform: translateX(-100%); }
   }
   .animate-marquee {
-    animation: marquee 60s linear infinite; /* Slowed down to 60s */
+    animation: marquee 60s linear infinite;
   }
   
   /* Filter for dark mode icons to make black icons visible */
   .dark-icon-glow {
     filter: drop-shadow(0 0 2px rgba(255, 255, 255, 0.9));
   }
-
   .dark-logo-glow {
-    filter: drop-shadow(0 0 2px rgba(255, 255, 255, 0.15));
+    filter: drop-shadow(0 0 2px rgba(255, 255, 255, 0.2));
   }
   
   .bg-grid-dark {
@@ -86,9 +85,9 @@ const RevealOnScroll = ({ children, className = "" }) => {
 
 const Marquee = ({ items, isDark }) => (
   <div className={`relative flex overflow-hidden py-4 border-y ${isDark ? 'bg-zinc-950 border-zinc-800' : 'bg-stone-100 border-zinc-200'}`}>
-    <div className="animate-marquee whitespace-nowrap flex gap-16 items-center">
+    <div className="animate-marquee whitespace-nowrap flex gap-8 md:gap-16 items-center">
       {(items.length > 0 ? items.concat(items).concat(items) : [{name: 'Loading Skills...'}]).map((item, i) => (
-        <span key={i} className={`text-xl md:text-2xl font-mono mx-4 flex items-center gap-4 ${isDark ? 'text-zinc-600' : 'text-zinc-400'}`}>
+        <span key={i} className={`text-lg md:text-2xl font-mono mx-2 md:mx-4 flex items-center gap-3 md:gap-4 ${isDark ? 'text-zinc-600' : 'text-zinc-400'}`}>
           <GitCommit size={14} className={isDark ? 'text-zinc-700' : 'text-zinc-400'} /> {item.name || item}
         </span>
       ))}
@@ -242,10 +241,9 @@ const App = () => {
     const lower = skillName.toLowerCase();
     
     // 1. Devicon Mapping (Preferred for Dev Tools - Colored)
-    // Check available icons at https://devicon.dev/
     const deviconMap = [
         { term: 'python', class: 'devicon-python-plain colored' },
-        { term: 'java', class: 'devicon-java-plain colored' }, // catch 'java' before 'javascript' if strict, but includes works fine here usually
+        { term: 'java', class: 'devicon-java-plain colored' }, 
         { term: 'js', class: 'devicon-javascript-plain colored' },
         { term: 'javascript', class: 'devicon-javascript-plain colored' },
         { term: 'react', class: 'devicon-react-original colored' },
@@ -281,7 +279,6 @@ const App = () => {
       { term: 'ansys', slug: 'ansys' },
       { term: 'autocad', slug: 'autodesk' },
       { term: 'fusion', slug: 'autodesk' },
-      // Generic 'office' or 'microsoft office' mapping
       { term: 'microsoft office', slug: 'microsoft' }, 
       { term: 'office', slug: 'microsoft365' }, 
       { term: 'word', slug: 'microsoftword' },
@@ -313,9 +310,9 @@ const App = () => {
   // --- Theme Colors Helper ---
   const themeClasses = {
     bg: isDark ? 'bg-zinc-950' : 'bg-stone-50',
-    text: isDark ? 'text-zinc-100' : 'text-zinc-900',
-    textMuted: isDark ? 'text-zinc-400' : 'text-zinc-500',
-    textSubtle: isDark ? 'text-zinc-600' : 'text-zinc-400',
+    text: isDark ? 'text-white' : 'text-zinc-900', // Changed to pure white for better contrast
+    textMuted: isDark ? 'text-zinc-300' : 'text-zinc-500', // Lighter grey for better readability
+    textSubtle: isDark ? 'text-zinc-400' : 'text-zinc-400', // Lighter subtle text
     border: isDark ? 'border-zinc-800' : 'border-zinc-200',
     cardBg: isDark ? 'bg-zinc-900' : 'bg-white',
     navBg: isDark ? 'bg-zinc-900/80' : 'bg-white/80',
@@ -356,7 +353,7 @@ const App = () => {
       </div>
 
       {/* --- Floating Pill Navigation --- */}
-      <nav className="fixed top-6 left-0 right-0 z-50 flex justify-center px-4">
+      <nav className="fixed top-4 md:top-6 left-0 right-0 z-50 flex justify-center px-4">
         <div className={`
           rounded-full px-2 py-2 flex items-center border ${themeClasses.navBorder}
           transition-all duration-500 ease-out
@@ -364,8 +361,8 @@ const App = () => {
             ? `${themeClasses.navBg} backdrop-blur-xl shadow-2xl` 
             : `${isDark ? 'bg-zinc-950/80' : 'bg-stone-50/80'} backdrop-blur-sm shadow-xl`}
         `}>
-          <div className={`pl-6 pr-6 md:pr-8 font-serif font-bold text-lg md:text-xl tracking-tighter cursor-pointer flex items-center gap-2 ${themeClasses.text}`} onClick={() => scrollToSection('home')}>
-            <Settings size={20} className={themeClasses.textSubtle} />
+          <div className={`pl-4 md:pl-6 pr-4 md:pr-8 font-serif font-bold text-lg md:text-xl tracking-tighter cursor-pointer flex items-center gap-2 ${themeClasses.text}`} onClick={() => scrollToSection('home')}>
+            <Settings size={18} className={themeClasses.textSubtle} />
             <span>M.E.</span>
           </div>
           
@@ -374,7 +371,7 @@ const App = () => {
               <button
                 key={item}
                 onClick={() => scrollToSection(item.toLowerCase())}
-                className={`px-5 py-2 rounded-full text-sm font-medium transition-all duration-300 ${activeSection === item.toLowerCase() ? `${isDark ? 'bg-white text-zinc-900' : 'bg-zinc-900 text-white'} shadow-sm` : `${themeClasses.textMuted} hover:${themeClasses.text}`}`}
+                className={`px-4 py-2 rounded-full text-xs lg:text-sm font-medium transition-all duration-300 ${activeSection === item.toLowerCase() ? `${isDark ? 'bg-white text-zinc-900' : 'bg-zinc-900 text-white'} shadow-sm` : `${themeClasses.textMuted} hover:${themeClasses.text}`}`}
               >
                 {item}
               </button>
@@ -382,7 +379,7 @@ const App = () => {
             
             <button 
                onClick={() => scrollToSection('contact')}
-               className={`ml-2 px-5 py-2 rounded-full text-sm font-medium border ${themeClasses.border} hover:bg-zinc-500/10 transition-colors`}
+               className={`ml-2 px-4 py-2 rounded-full text-xs lg:text-sm font-medium border ${themeClasses.border} hover:bg-zinc-500/10 transition-colors`}
             >
               Contact
             </button>
@@ -393,7 +390,7 @@ const App = () => {
                 href={aboutData.resume_link} 
                 target="_blank"
                 rel="noopener noreferrer"
-                className={`ml-2 px-4 py-2 rounded-full text-sm font-medium border ${themeClasses.border} hover:bg-zinc-500/10 transition-all flex items-center gap-2 ${themeClasses.textSubtle} hover:${themeClasses.text}`}
+                className={`ml-2 px-4 py-2 rounded-full text-xs lg:text-sm font-medium border ${themeClasses.border} hover:bg-zinc-500/10 transition-all flex items-center gap-2 ${themeClasses.textSubtle} hover:${themeClasses.text}`}
                 >
                 Resume <Download size={14} />
                 </a>
@@ -407,33 +404,38 @@ const App = () => {
             </button>
           </div>
 
-          <button className={`md:hidden p-2 ml-2 ${themeClasses.text}`} onClick={() => setIsMenuOpen(!isMenuOpen)}>
-            {isMenuOpen ? <X size={20} /> : <Menu size={20} />}
-          </button>
+          <div className="flex items-center md:hidden">
+             <button 
+              onClick={toggleTheme}
+              className={`mr-2 p-2 rounded-full border ${themeClasses.border} hover:bg-zinc-500/10 transition-colors ${themeClasses.text}`}
+            >
+              {isDark ? <Sun size={16} /> : <Moon size={16} />}
+            </button>
+            <button className={`p-2 ${themeClasses.text}`} onClick={() => setIsMenuOpen(!isMenuOpen)}>
+                {isMenuOpen ? <X size={20} /> : <Menu size={20} />}
+            </button>
+          </div>
         </div>
       </nav>
 
       {/* Mobile Menu Overlay */}
-      <div className={`fixed inset-0 ${themeClasses.bg} z-40 pt-32 px-6 md:hidden transition-all duration-500 transform ${isMenuOpen ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-full pointer-events-none'}`}>
-        <div className="flex flex-col gap-8 text-center">
+      <div className={`fixed inset-0 ${themeClasses.bg} z-40 pt-28 px-6 md:hidden transition-all duration-500 transform ${isMenuOpen ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-full pointer-events-none'}`}>
+        <div className="flex flex-col gap-6 text-center h-full overflow-y-auto pb-10">
           {['Home', 'About', 'Skills', 'Education', 'Projects', 'Achievements', 'Experience', 'Thesis', 'Contact'].map((item) => (
             <button 
               key={item}
               onClick={() => scrollToSection(item.toLowerCase())}
-              className={`text-4xl font-serif ${themeClasses.text} hover:${themeClasses.textMuted} transition-colors`}
+              className={`text-3xl font-serif ${themeClasses.text} hover:${themeClasses.textMuted} transition-colors`}
             >
               {item}
             </button>
           ))}
-          <div className="flex justify-center gap-4 mt-4">
+          <div className="flex justify-center gap-4 mt-4 pb-10">
              {aboutData?.resume_link && (
                  <a href={aboutData.resume_link} target="_blank" rel="noopener noreferrer" className={`text-xl font-serif italic ${themeClasses.textMuted} hover:${themeClasses.text} flex items-center gap-2`}>
                     Resume <Download size={20} />
                  </a>
              )}
-             <button onClick={toggleTheme} className={`text-xl font-serif italic ${themeClasses.textMuted} hover:${themeClasses.text} flex items-center gap-2`}>
-                Theme {isDark ? <Sun size={20} /> : <Moon size={20} />}
-             </button>
           </div>
         </div>
       </div>
@@ -449,18 +451,18 @@ const App = () => {
                 <span className={`font-mono text-xs uppercase tracking-[0.2em] ${themeClasses.textMuted}`}>System.Architecture.Design</span>
                 <div className={`h-px w-24 ${isDark ? 'bg-zinc-700' : 'bg-zinc-300'}`}></div>
             </div>
-            <h1 className={`text-5xl sm:text-7xl md:text-9xl font-serif font-medium leading-[0.95] md:leading-[0.9] tracking-tight mb-8 ${themeClasses.text} relative`}>
-              {aboutData?.name ? aboutData.name.split(' ')[0] + ' ' + aboutData.name.split(' ')[1] : 'Md. Adnan'} <br/>
-              <span className={`italic ${themeClasses.textSubtle} ml-2 md:ml-24 relative z-10`}>
-              {aboutData?.name ? aboutData.name.split(' ').slice(2).join(' ') : 'Ahmed.'}
+            <h1 className={`text-4xl sm:text-6xl md:text-8xl lg:text-9xl font-serif font-medium leading-[1.1] md:leading-[0.9] tracking-tight mb-8 ${themeClasses.text} relative`}>
+              {aboutData?.name ? aboutData.name.split(' ')[0] : 'Design'} <br/>
+              <span className={`italic ${themeClasses.textSubtle} ml-0 md:ml-24 relative z-10`}>
+                {aboutData?.name ? aboutData.name.split(' ').slice(1).join(' ') : 'Precision.'}
               </span>
-              <div className={`absolute bottom-2 left-2 md:left-24 w-32 h-1 ${isDark ? 'bg-zinc-800' : 'bg-zinc-300'} -z-10 skew-x-12`}></div>
+              <div className={`absolute bottom-2 left-0 md:left-24 w-32 h-1 ${isDark ? 'bg-zinc-800' : 'bg-zinc-300'} -z-10 skew-x-12`}></div>
             </h1>
           </RevealOnScroll>
           
           <div className="grid md:grid-cols-3 gap-8 md:gap-12 items-end mt-12">
             <div className={`md:col-span-1 border-l ${themeClasses.border} pl-6`}>
-                <p className={`text-base md:text-lg ${themeClasses.textMuted} leading-relaxed font-light`}>
+                <p className={`text-base md:text-lg ${themeClasses.textMuted} leading-relaxed font-normal`}> {/* Removed font-light */}
                   {aboutData?.short_bio || "Mechanical Engineer focused on bridging the gap between rigorous analysis and functional aesthetics."}
                 </p>
             </div>
@@ -482,7 +484,7 @@ const App = () => {
       <Marquee isDark={isDark} items={skillsData} />
 
       {/* About Section */}
-      <section id="about" className={`py-20 md:py-32 px-6 ${themeClasses.sectionBg} relative z-10 border-b ${themeClasses.border}`}>
+      <section id="about" className={`py-16 md:py-32 px-6 ${themeClasses.sectionBg} relative z-10 border-b ${themeClasses.border}`}>
         <div className="container mx-auto max-w-6xl">
           <RevealOnScroll>
             <div className="grid md:grid-cols-2 gap-12 md:gap-20 items-center">
@@ -493,11 +495,11 @@ const App = () => {
                 <h2 className={`text-3xl md:text-5xl font-serif mb-8 leading-tight ${themeClasses.text}`}>
                   Applying <span className={`italic ${themeClasses.textMuted}`}>first principles</span> to solve complex physical problems.
                 </h2>
-                <div className={`space-y-6 text-lg ${themeClasses.textMuted} leading-relaxed font-light whitespace-pre-wrap mb-10`}>
+                <div className={`space-y-6 text-lg ${themeClasses.textMuted} leading-relaxed font-normal whitespace-pre-wrap mb-10`}> {/* Removed font-light */}
                   {aboutData?.long_bio || "I believe that great engineering is indistinguishable from art. Whether it's optimizing a thermal system or designing a chassis, the goal is always elegance in efficiency."}
                 </div>
 
-                {/* <div className="grid grid-cols-1 sm:grid-cols-2 gap-y-6 gap-x-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-y-6 gap-x-4">
                     {[
                         { label: "Birthday", value: aboutData?.birthday },
                         { label: "Website", value: aboutData?.website },
@@ -510,11 +512,11 @@ const App = () => {
                         info.value && (
                             <div key={i}>
                                 <span className={`block text-xs uppercase tracking-widest ${themeClasses.textMuted} mb-1 font-mono opacity-70`}>{info.label}:</span>
-                                <span className={`${themeClasses.text} font-medium`}>{info.value}</span>
+                                <span className={`${themeClasses.text} font-medium break-all`}>{info.value}</span>
                             </div>
                         )
                     ))}
-                </div> */}
+                </div>
               </div>
               <div className="relative">
                   <div 
@@ -540,22 +542,22 @@ const App = () => {
       </section>
 
       {/* Skills Section */}
-      <section id="skills" className={`py-20 md:py-32 px-6 ${themeClasses.sectionBg} relative z-10 border-b ${themeClasses.border}`}>
+      <section id="skills" className={`py-16 md:py-32 px-6 ${themeClasses.sectionBg} relative z-10 border-b ${themeClasses.border}`}>
         <div className="container mx-auto max-w-6xl">
           <RevealOnScroll>
-            <div className="flex items-center gap-4 mb-16">
+            <div className="flex items-center gap-4 mb-12 md:mb-16">
                <Cpu className={themeClasses.textMuted} size={24} />
                <h2 className={`text-3xl md:text-5xl font-serif ${themeClasses.text}`}>Technical Proficiency</h2>
             </div>
 
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
                {skillsData.length > 0 ? skillsData.map((skill, index) => {
                   const asset = getSkillAsset(skill.name);
                   
                   return (
-                    <div key={skill.id || index} className={`p-6 border ${themeClasses.border} rounded-sm flex flex-col items-center justify-center gap-4 group hover:bg-zinc-500/5 transition-colors`}>
+                    <div key={skill.id || index} className={`p-4 md:p-6 border ${themeClasses.border} rounded-sm flex flex-col items-center justify-center gap-4 group hover:bg-zinc-500/5 transition-colors`}>
                         {asset.type === 'devicon' ? (
-                            <i className={`${asset.className} text-4xl transition-transform group-hover:scale-110`}></i>
+                            <i className={`${asset.className} text-3xl md:text-4xl transition-transform group-hover:scale-110`}></i>
                         ) : asset.type === 'image' ? (
                             <img 
                                 src={asset.src} 
@@ -568,7 +570,7 @@ const App = () => {
                                 className={`${themeClasses.textSubtle} group-hover:${themeClasses.text} transition-colors group-hover:scale-110`} 
                             />
                         )}
-                        <span className={`font-mono text-sm uppercase tracking-wide text-center ${themeClasses.text}`}>
+                        <span className={`font-mono text-xs md:text-sm uppercase tracking-wide text-center ${themeClasses.text}`}>
                           {skill.name}
                         </span>
                     </div>
@@ -582,28 +584,28 @@ const App = () => {
       </section>
 
       {/* Education Section */}
-      <section id="education" className={`py-20 md:py-32 px-6 ${themeClasses.sectionBg} relative z-10 border-b ${themeClasses.border}`}>
+      <section id="education" className={`py-16 md:py-32 px-6 ${themeClasses.sectionBg} relative z-10 border-b ${themeClasses.border}`}>
         <div className="container mx-auto max-w-6xl">
           <RevealOnScroll>
-            <div className="flex items-center gap-4 mb-16">
+            <div className="flex items-center gap-4 mb-12 md:mb-16">
                <GraduationCap className={themeClasses.textMuted} size={24} />
                <h2 className={`text-3xl md:text-5xl font-serif ${themeClasses.text}`}>Education</h2>
             </div>
 
-            <div className={`relative border-l ${themeClasses.border} ml-3 md:ml-0 space-y-12`}>
+            <div className={`relative border-l ${themeClasses.border} ml-3 md:ml-0 space-y-12 md:space-y-16`}>
               {educationData.length > 0 ? educationData.map((edu) => (
                 <div key={edu.id} className="relative pl-8 md:pl-12 group">
                   <div className={`absolute -left-[5px] top-2 w-[9px] h-[9px] ${themeClasses.bg} border ${isDark ? 'border-zinc-500' : 'border-zinc-400'} rounded-full group-hover:${isDark ? 'bg-white' : 'bg-zinc-900'} transition-colors`}></div>
                   
                   {/* Updated Layout for Education Item */}
                   <div className="grid md:grid-cols-4 gap-4 items-start">
-                      {/* Left Column: University Logo Placeholder */}
-                      <div className={`md:col-span-1 flex justify-center md:justify-start`}>
-                          <div className={`w-28 h-28 rounded-xl border ${themeClasses.border} ${isDark ? 'bg-zinc-800/50 dark-logo-glow' : 'bg-white'} flex items-center justify-center overflow-hidden`}>
+                      {/* Left Column: University Logo Placeholder - Adjusted for mobile */}
+                      <div className={`md:col-span-1 flex justify-start`}>
+                          <div className={`w-32 h-32 md:w-32 md:h-32 rounded-xl border dark-logo-glow ${themeClasses.border} ${isDark ? 'bg-zinc-800/50' : 'bg-white'} flex items-center justify-center  overflow-hidden shrink-0`}>
                              {edu.logo_url ? (
                                 <img src={edu.logo_url} alt={edu.institution} className="w-full h-full object-contain" />
                              ) : (
-                                <Building2 size={32} className={themeClasses.textSubtle} />
+                                <Building2 size={24} className={`md:w-8 md:h-8 ${themeClasses.textSubtle}`} />
                              )}
                           </div>
                       </div>
@@ -630,11 +632,11 @@ const App = () => {
       </section>
 
       {/* Projects - Masonry Grid */}
-      <section id="projects" className={`py-20 md:py-32 px-6 ${themeClasses.sectionBg} relative z-10 border-b ${themeClasses.border}`}>
+      <section id="projects" className={`py-16 md:py-32 px-6 ${themeClasses.sectionBg} relative z-10 border-b ${themeClasses.border}`}>
         <div className="container mx-auto max-w-6xl">
           <RevealOnScroll>
             {/* Standardized Header */}
-            <div className="flex items-center gap-4 mb-16">
+            <div className="flex items-center gap-4 mb-12 md:mb-16">
                <Briefcase className={themeClasses.textMuted} size={24} />
                <h2 className={`text-3xl md:text-5xl font-serif ${themeClasses.text}`}>Portfolio</h2>
             </div>
@@ -678,22 +680,22 @@ const App = () => {
       </section>
 
       {/* Achievements Section */}
-      <section id="achievements" className={`py-20 md:py-32 px-6 ${themeClasses.sectionBg} relative z-10 border-b ${themeClasses.border}`}>
+      <section id="achievements" className={`py-16 md:py-32 px-6 ${themeClasses.sectionBg} relative z-10 border-b ${themeClasses.border}`}>
         <div className="container mx-auto max-w-6xl">
           <RevealOnScroll>
-            <div className="flex items-center gap-4 mb-16">
+            <div className="flex items-center gap-4 mb-12 md:mb-16">
                 <Award className={themeClasses.textMuted} size={24} />
                 <h2 className={`text-3xl md:text-5xl font-serif ${themeClasses.text}`}>Achievements</h2>
             </div>
 
             <div className="grid md:grid-cols-2 gap-8">
               {achievementsData.length > 0 ? achievementsData.map((achievement) => (
-                <div key={achievement.id} className={`group ${themeClasses.cardBg} p-8 rounded-sm border ${themeClasses.border} hover:${isDark ? 'border-zinc-600' : 'border-zinc-400'} transition-all hover:-translate-y-1 relative`}>
+                <div key={achievement.id} className={`group ${themeClasses.cardBg} p-6 md:p-8 rounded-sm border ${themeClasses.border} hover:${isDark ? 'border-zinc-600' : 'border-zinc-400'} transition-all hover:-translate-y-1 relative`}>
                    <div className="flex justify-between items-start mb-4">
-                      <h4 className={`text-xl font-serif ${themeClasses.text} group-hover:${themeClasses.textMuted} transition-colors`}>{achievement.title}</h4>
+                      <h4 className={`text-lg md:text-xl font-serif ${themeClasses.text} group-hover:${themeClasses.textMuted} transition-colors`}>{achievement.title}</h4>
                       {/* Assuming 'year' or 'date' is present in your backend response for achievements */}
                       {(achievement.year || achievement.date) && (
-                        <span className={`font-mono text-xs ${themeClasses.textMuted} border ${themeClasses.border} px-2 py-1 rounded-full`}>{achievement.year || achievement.date}</span>
+                        <span className={`font-mono text-xs ${themeClasses.textMuted} border ${themeClasses.border} px-2 py-1 rounded-full shrink-0 ml-2`}>{achievement.year || achievement.date}</span>
                       )}
                    </div>
                    {/* Assuming 'organization' or similar field exists */}
@@ -711,15 +713,15 @@ const App = () => {
       </section>
 
       {/* Experience Section */}
-      <section id="experience" className={`py-20 md:py-32 px-6 ${themeClasses.sectionBg} relative z-10 border-b ${themeClasses.border}`}>
+      <section id="experience" className={`py-16 md:py-32 px-6 ${themeClasses.sectionBg} relative z-10 border-b ${themeClasses.border}`}>
         <div className="container mx-auto max-w-6xl">
           <RevealOnScroll>
-            <div className="flex items-center gap-4 mb-16">
+            <div className="flex items-center gap-4 mb-12 md:mb-16">
                 <Clock className={themeClasses.textMuted} size={24} />
-                <h2 className={`text-3xl md:text-5xl font-serif ${themeClasses.text}`}>Work Experience</h2>
+                <h2 className={`text-3xl md:text-5xl font-serif ${themeClasses.text}`}>Professional History</h2>
             </div>
 
-            <div className={`relative border-l ${themeClasses.border} ml-3 md:ml-0 space-y-16`}>
+            <div className={`relative border-l ${themeClasses.border} ml-3 md:ml-0 space-y-12 md:space-y-16`}>
               {experienceData.length > 0 ? experienceData.map((job) => (
                 <div key={job.id} className="relative pl-8 md:pl-12 group">
                   <div className={`absolute -left-[5px] top-2 w-[9px] h-[9px] ${themeClasses.bg} border ${isDark ? 'border-zinc-500' : 'border-zinc-400'} rounded-full group-hover:${isDark ? 'bg-white' : 'bg-zinc-900'} transition-colors`}></div>
@@ -742,10 +744,10 @@ const App = () => {
       </section>
 
       {/* Thesis Section */}
-      <section id="thesis" className={`py-20 md:py-32 px-6 ${themeClasses.sectionBg} relative z-10 border-b ${themeClasses.border}`}>
+      <section id="thesis" className={`py-16 md:py-32 px-6 ${themeClasses.sectionBg} relative z-10 border-b ${themeClasses.border}`}>
         <div className="container mx-auto max-w-6xl">
           <RevealOnScroll>
-            <div className="flex items-center gap-4 mb-16 justify-end text-right">
+            <div className="flex items-center gap-4 mb-12 md:mb-16 justify-end text-right">
                 <div>
                   <h2 className={`text-3xl md:text-5xl font-serif ${themeClasses.text}`}>Research & Publications</h2>
                   <span className={`font-mono text-xs ${themeClasses.textMuted}`}>ACADEMIC ARCHIVE</span>
@@ -755,7 +757,7 @@ const App = () => {
 
             <div className="grid md:grid-cols-3 gap-6">
                 {thesisData.length > 0 ? thesisData.map((paper) => (
-                  <div key={paper.id} className={`group ${themeClasses.cardBg} p-8 rounded-sm border ${themeClasses.border} hover:${isDark ? 'border-zinc-600' : 'border-zinc-400'} transition-all hover:-translate-y-1 relative overflow-hidden shadow-sm`}>
+                  <div key={paper.id} className={`group ${themeClasses.cardBg} p-6 md:p-8 rounded-sm border ${themeClasses.border} hover:${isDark ? 'border-zinc-600' : 'border-zinc-400'} transition-all hover:-translate-y-1 relative overflow-hidden shadow-sm`}>
                       <div className="absolute top-0 right-0 p-4 opacity-10">
                         <FileText size={40} />
                       </div>
@@ -780,7 +782,7 @@ const App = () => {
 
 
       {/* Contact / Footer */}
-      <section id="contact" className={`py-20 md:py-16 px-6 ${themeClasses.sectionBg} relative z-10`}>
+      <section id="contact" className={`pt-16 pb-8 md:pt-32 md:pb-10 px-6 ${themeClasses.sectionBg} relative z-10`}>
         <div className="container mx-auto max-w-6xl">
           <RevealOnScroll>
             <div className="grid md:grid-cols-2 gap-12 md:gap-20">
@@ -851,7 +853,7 @@ const App = () => {
               </div>
             </div>
             
-            <div className={`mt-20 pt-8 border-t ${themeClasses.border} flex flex-col md:flex-row justify-between text-sm ${themeClasses.textSubtle} font-mono gap-4 items-center`}>
+            <div className={`mt-10 pt-8 border-t ${themeClasses.border} flex flex-col md:flex-row justify-between text-sm ${themeClasses.textSubtle} font-mono gap-4 items-center`}>
               <span>© {new Date().getFullYear()} {aboutData?.name || "Alex Engineer"}</span>
               <span>Made with React & Flask</span>
             </div>
