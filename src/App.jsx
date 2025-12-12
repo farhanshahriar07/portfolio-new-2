@@ -854,8 +854,8 @@ const App = () => {
             </div>
             
             <div className={`mt-10 pt-8 border-t ${themeClasses.border} flex flex-col md:flex-row justify-between text-sm ${themeClasses.textSubtle} font-mono gap-4 items-center`}>
-              <span>© {new Date().getFullYear()} {aboutData?.name || "Alex Engineer"}</span>
-              <span>Made with React & Flask</span>
+              <span>© {new Date().getFullYear()} {aboutData?.name || "Md. Adnan Ahmed"}</span>
+              {/* <span>Made with React & Flask</span> */}
             </div>
           </RevealOnScroll>
         </div>
