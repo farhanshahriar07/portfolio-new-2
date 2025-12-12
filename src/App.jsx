@@ -38,7 +38,7 @@ const styles = `
     filter: drop-shadow(0 0 2px rgba(255, 255, 255, 0.9));
   }
   .dark-logo-glow {
-    filter: drop-shadow(0 0 2px rgba(255, 255, 255, 0.2));
+    filter: drop-shadow(0 0 2px rgba(255, 255, 255, 0.6));
   }
   
   .bg-grid-dark {
@@ -499,7 +499,7 @@ const App = () => {
                   {aboutData?.long_bio || "I believe that great engineering is indistinguishable from art. Whether it's optimizing a thermal system or designing a chassis, the goal is always elegance in efficiency."}
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-y-6 gap-x-4">
+                {/* <div className="grid grid-cols-1 sm:grid-cols-2 gap-y-6 gap-x-4">
                     {[
                         { label: "Birthday", value: aboutData?.birthday },
                         { label: "Website", value: aboutData?.website },
@@ -516,7 +516,7 @@ const App = () => {
                             </div>
                         )
                     ))}
-                </div>
+                </div> */}
               </div>
               <div className="relative">
                   <div 
@@ -645,7 +645,7 @@ const App = () => {
               {projectsData.length > 0 ? projectsData.map((project, index) => (
                 <RevealOnScroll key={project.id} className={index % 2 !== 0 ? "md:pt-32" : ""}>
                   <div className="group cursor-pointer mb-12 md:mb-0">
-                    <div className={`aspect-[4/3] ${isDark ? 'bg-zinc-900' : 'bg-zinc-100'} rounded-sm overflow-hidden mb-6 relative transition-all duration-500 group-hover:opacity-90 border ${themeClasses.border}`}>
+                    <div className={`aspect-[4/3] ${isDark ? 'bg-zinc-900' : 'bg-zinc-100'} rounded-sm overflow-hidden mb-6 relative transition-all duration-500 group-hover:opacity-99 border ${themeClasses.border}`}>
                       <div className={`absolute top-4 right-4 font-mono text-[10px] ${themeClasses.textMuted} bg-black/10 px-2 py-1 backdrop-blur-sm rounded`}>PRJ-{project.id}</div>
                       
                       {project.image_url ? (
