@@ -18,6 +18,20 @@ const styles = `
   /* Import Devicon for colored tech icons */
   @import url("https://cdn.jsdelivr.net/gh/devicons/devicon@latest/devicon.min.css");
 
+  /* --- Global Resets to Fix Scrollbars --- */
+  html, body {
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    height: 100vh; /* Lock body height */
+    overflow: hidden; /* Disable scrolling on body */
+  }
+  
+  #root {
+    width: 100%;
+    height: 100%; /* Ensure root fills body */
+  }
+
   .font-serif { font-family: 'Playfair Display', serif; }
   .font-sans { font-family: 'Inter', sans-serif; }
   .font-mono { font-family: 'JetBrains Mono', monospace; }
@@ -101,6 +115,9 @@ const App = () => {
   const [scrollY, setScrollY] = useState(0);
   const [theme, setTheme] = useState('dark');
   
+  // Create a ref for the main scrollable container
+  const mainScrollRef = useRef(null);
+  
   // --- Data State ---
   const [loading, setLoading] = useState(true);
   const [aboutData, setAboutData] = useState(null);
@@ -123,7 +140,9 @@ const App = () => {
   };
 
   const scrollToTop = () => {
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    if (mainScrollRef.current) {
+        mainScrollRef.current.scrollTo({ top: 0, behavior: 'smooth' });
+    }
   };
 
   // --- Fetch API Data ---
@@ -157,29 +176,46 @@ const App = () => {
     fetchAllData();
   }, []);
 
-  // --- Scroll Listener ---
+  // --- Scroll Listener (Attached to main container now) ---
   useEffect(() => {
     const handleScroll = () => {
-      setScrollY(window.scrollY);
+      if (!mainScrollRef.current) return;
+      
+      const currentScrollY = mainScrollRef.current.scrollTop;
+      setScrollY(currentScrollY);
+      
       const sections = ['home', 'about', 'skills', 'education', 'projects', 'achievements', 'experience', 'thesis', 'contact'];
       for (const section of sections) {
         const element = document.getElementById(section);
         if (element) {
           const rect = element.getBoundingClientRect();
+          // Adjust threshold for detection since we are scrolling within a container
+          // rect.top is relative to viewport, so logic mostly stays same
           if (rect.top <= 200 && rect.bottom >= 200) {
             setActiveSection(section);
           }
         }
       }
     };
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
+
+    const scrollContainer = mainScrollRef.current;
+    if (scrollContainer) {
+        scrollContainer.addEventListener('scroll', handleScroll);
+    }
+    
+    return () => {
+        if (scrollContainer) {
+            scrollContainer.removeEventListener('scroll', handleScroll);
+        }
+    };
+  }, [loading]); // Re-run when loading finishes to ensure ref is attached
 
   const scrollToSection = (id) => {
     setIsMenuOpen(false);
     const element = document.getElementById(id);
-    if (element) element.scrollIntoView({ behavior: 'smooth' });
+    if (element) {
+        element.scrollIntoView({ behavior: 'smooth' });
+    }
   };
 
   const handleContactChange = (e) => {
@@ -335,7 +371,15 @@ const App = () => {
   }
 
   return (
-    <div className={`min-h-screen ${themeClasses.bg} ${themeClasses.text} font-sans transition-colors duration-500 overflow-x-hidden relative`}>
+    // Single Scroll Container setup:
+    // 1. 'h-screen' locks the height to viewport height.
+    // 2. 'overflow-y-auto' enables vertical scrolling ONLY on this div.
+    // 3. 'overflow-x-hidden' prevents horizontal scrollbars.
+    // 4. 'ref={mainScrollRef}' allows us to attach scroll listener to this specific container.
+    <div 
+        ref={mainScrollRef}
+        className={`h-screen w-full ${themeClasses.bg} ${themeClasses.text} font-sans transition-colors duration-500 overflow-y-auto overflow-x-hidden relative scroll-smooth`}
+    >
       <style>{styles}</style>
 
       {/* --- Parallax Background Grid --- */}
@@ -601,7 +645,7 @@ const App = () => {
                   <div className="grid md:grid-cols-4 gap-4 items-start">
                       {/* Left Column: University Logo Placeholder - Adjusted for mobile */}
                       <div className={`md:col-span-1 flex justify-start`}>
-                          <div className={`w-32 h-32 md:w-32 md:h-32 rounded-xl border dark-logo-glow ${themeClasses.border} ${isDark ? 'bg-zinc-800/50' : 'bg-white'} flex items-center justify-center  overflow-hidden shrink-0`}>
+                          <div className={`w-32 h-32 md:w-32 md:h-32 rounded-xl border ${themeClasses.border} ${isDark ? 'bg-zinc-800/50' : 'bg-white'} flex items-center justify-center dark-logo-glow overflow-hidden shrink-0`}>
                              {edu.logo_url ? (
                                 <img src={edu.logo_url} alt={edu.institution} className="w-full h-full object-contain" />
                              ) : (
@@ -747,12 +791,12 @@ const App = () => {
       <section id="thesis" className={`py-16 md:py-32 px-6 ${themeClasses.sectionBg} relative z-10 border-b ${themeClasses.border}`}>
         <div className="container mx-auto max-w-6xl">
           <RevealOnScroll>
-            <div className="flex items-center gap-4 mb-12 md:mb-16 justify-end text-right">
+            <div className="flex items-center gap-4 mb-12 md:mb-16"> {/* Removed justify-end text-right */}
+                <BookOpen className={themeClasses.textMuted} size={24} /> {/* Moved icon to start */}
                 <div>
                   <h2 className={`text-3xl md:text-5xl font-serif ${themeClasses.text}`}>Research & Publications</h2>
                   <span className={`font-mono text-xs ${themeClasses.textMuted}`}>ACADEMIC ARCHIVE</span>
                 </div>
-                <BookOpen className={themeClasses.textMuted} size={24} />
             </div>
 
             <div className="grid md:grid-cols-3 gap-6">
@@ -782,29 +826,29 @@ const App = () => {
 
 
       {/* Contact / Footer */}
-      <section id="contact" className={`pt-16 pb-8 md:pt-32 md:pb-10 px-6 ${themeClasses.sectionBg} relative z-10`}>
+      <section id="contact" className={`pt-16 pb-8 md:pt-32 md:pb-10 px-4 md:px-6 ${themeClasses.sectionBg} relative z-10`}>
         <div className="container mx-auto max-w-6xl">
           <RevealOnScroll>
-            <div className="grid md:grid-cols-2 gap-12 md:gap-20">
-              <div>
-                <h2 className={`text-4xl md:text-6xl font-serif mb-6 ${themeClasses.text}`}>Let's start a project.</h2>
-                <p className={`text-lg ${themeClasses.textMuted} mb-12`}>
+            <div className="grid md:grid-cols-2 gap-10 md:gap-20">
+              <div className="mb-10 md:mb-0">
+                <h2 className={`text-3xl sm:text-4xl md:text-6xl font-serif mb-6 ${themeClasses.text}`}>Let's start a project.</h2>
+                <p className={`text-base md:text-lg ${themeClasses.textMuted} mb-8 md:mb-12`}>
                   {aboutData?.freelance_status || "Available for freelance design engineering projects, consulting, and robotic systems development."}
                 </p>
-                <div className="space-y-6">
+                <div className="space-y-4 md:space-y-6">
                   {/* Dynamic Contact Links - Only showing 8 specific types */}
                   {contactLinks.map((link, i) => (
                     <a key={i} href={link.href || '#'} target={link.href && link.href.startsWith('http') ? '_blank' : '_self'} rel="noopener noreferrer" className={`flex items-center gap-4 ${themeClasses.textSubtle} hover:${themeClasses.text} transition-colors group`}>
                       <link.icon size={20} className="group-hover:scale-110 transition-transform"/>
-                      <span>{link.href}</span>
+                      <span className="text-sm md:text-base">{link.href}</span>
                     </a>
                   ))}
                 </div>
               </div>
 
-              <div className={`${themeClasses.cardBg} p-6 md:p-8 rounded-sm border ${themeClasses.border}`}>
-                <form className="space-y-6" onSubmit={handleContactSubmit}>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className={`${themeClasses.cardBg} p-5 md:p-8 rounded-sm border ${themeClasses.border}`}>
+                <form className="space-y-4 md:space-y-6" onSubmit={handleContactSubmit}>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
                     {['name', 'email'].map((field) => (
                       <div key={field} className="space-y-2">
                         <label className={`text-xs uppercase tracking-wider ${themeClasses.textMuted} font-mono`}>{field}</label>
@@ -814,7 +858,7 @@ const App = () => {
                             value={contactForm[field]}
                             onChange={handleContactChange}
                             required
-                            className={`w-full ${themeClasses.inputBg} border ${themeClasses.border} rounded-sm p-3 ${themeClasses.text} focus:outline-none focus:border-zinc-500 transition-colors font-sans`} 
+                            className={`w-full ${themeClasses.inputBg} border ${themeClasses.border} rounded-sm p-3 text-sm md:text-base ${themeClasses.text} focus:outline-none focus:border-zinc-500 transition-colors font-sans`} 
                             placeholder={field === 'email' ? 'jane@example.com' : 'Jane Doe'} 
                         />
                       </div>
@@ -827,7 +871,7 @@ const App = () => {
                         name="subject"
                         value={contactForm.subject}
                         onChange={handleContactChange}
-                        className={`w-full ${themeClasses.inputBg} border ${themeClasses.border} rounded-sm p-3 ${themeClasses.text} focus:outline-none focus:border-zinc-500 transition-colors font-sans`} 
+                        className={`w-full ${themeClasses.inputBg} border ${themeClasses.border} rounded-sm p-3 text-sm md:text-base ${themeClasses.text} focus:outline-none focus:border-zinc-500 transition-colors font-sans`} 
                         placeholder="Project Inquiry" 
                     />
                   </div>
@@ -839,21 +883,21 @@ const App = () => {
                         onChange={handleContactChange}
                         required
                         rows="4" 
-                        className={`w-full ${themeClasses.inputBg} border ${themeClasses.border} rounded-sm p-3 ${themeClasses.text} focus:outline-none focus:border-zinc-500 transition-colors resize-none font-sans`} 
+                        className={`w-full ${themeClasses.inputBg} border ${themeClasses.border} rounded-sm p-3 text-sm md:text-base ${themeClasses.text} focus:outline-none focus:border-zinc-500 transition-colors resize-none font-sans`} 
                         placeholder="Tell me about your project needs..."
                     ></textarea>
                   </div>
                   <button 
                     disabled={sending}
-                    className={`w-full ${isDark ? 'bg-white text-zinc-900' : 'bg-zinc-900 text-white'} font-medium py-4 rounded-sm hover:opacity-90 transition-opacity flex items-center justify-center gap-2 font-mono text-sm uppercase tracking-widest disabled:opacity-50`}
+                    className={`w-full ${isDark ? 'bg-white text-zinc-900' : 'bg-zinc-900 text-white'} font-medium py-3 md:py-4 rounded-sm hover:opacity-90 transition-opacity flex items-center justify-center gap-2 font-mono text-sm uppercase tracking-widest disabled:opacity-50`}
                   >
-                    {sending ? 'Sending...' : sentSuccess ? 'Message Sent!' : 'Send Message'} <Send size={18} />
+                    {sending ? 'Sending...' : sentSuccess ? 'Message Sent!' : 'Send Message'} <Send size={16} />
                   </button>
                 </form>
               </div>
             </div>
             
-            <div className={`mt-10 pt-8 border-t ${themeClasses.border} flex flex-col md:flex-row justify-between text-sm ${themeClasses.textSubtle} font-mono gap-4 items-center`}>
+            <div className={`mt-10 pt-8 border-t ${themeClasses.border} flex flex-col md:flex-row justify-between text-xs md:text-sm ${themeClasses.textSubtle} font-mono gap-4 items-center text-center md:text-left`}>
               <span>© {new Date().getFullYear()} {aboutData?.name || "Md. Adnan Ahmed"}</span>
               {/* <span>Made with React & Flask</span> */}
             </div>
