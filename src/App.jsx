@@ -663,7 +663,7 @@ const App = () => {
                             <span className={`font-mono text-sm ${themeClasses.textMuted} whitespace-nowrap`}>{edu.year_range}</span>
                         </div>
                         
-                        <p className={`${themeClasses.textMuted} text-sm max-w-lg`}>{edu.description}</p>
+                        <p className={`${themeClasses.textMuted} text-sm max-w-lg whitespace-pre-line`}>{edu.description}</p>
                       </div>
                   </div>
                 </div>
@@ -705,7 +705,7 @@ const App = () => {
                     <div className={`flex justify-between items-start border-t ${themeClasses.border} pt-4`}>
                       <div>
                         <h3 className={`text-2xl md:text-3xl font-serif mb-2 ${themeClasses.text} group-hover:${themeClasses.textMuted} transition-colors`}>{project.title}</h3>
-                        <p className={`${themeClasses.textMuted} max-w-sm text-sm md:text-base font-mono`}>{project.category}</p>
+                        <p className={`${themeClasses.textMuted} max-w-sm text-sm md:text-base font-mono whitespace-pre-line`}>{project.category}</p>
                       </div>
                       {project.project_link && (
                           <a href={project.project_link} target="_blank" rel="noopener noreferrer">
@@ -746,7 +746,7 @@ const App = () => {
                    {achievement.organization && (
                      <p className={`${themeClasses.textSubtle} font-medium mb-2`}>{achievement.organization}</p>
                    )}
-                   <p className={`${themeClasses.textMuted} text-sm leading-relaxed`}>{achievement.description}</p>
+                   <p className={`${themeClasses.textMuted} text-sm leading-relaxed whitespace-pre-line`}>{achievement.description}</p>
                 </div>
               )) : (
                 <div className={`col-span-2 text-center py-10 ${themeClasses.textMuted}`}>No achievements loaded.</div>
@@ -775,7 +775,7 @@ const App = () => {
                       <div className="md:col-span-3">
                         <h4 className={`text-xl md:text-2xl font-medium ${themeClasses.text} group-hover:${themeClasses.textMuted} transition-colors`}>{job.role}</h4>
                         <div className={`${themeClasses.textSubtle} font-serif italic mb-2`}>{job.company}</div>
-                        <p className={`${themeClasses.textMuted} text-sm max-w-lg`}>{job.description}</p>
+                        <p className={`${themeClasses.textMuted} text-sm max-w-lg whitespace-pre-line`}>{job.description}</p>
                       </div>
                   </div>
                 </div>
