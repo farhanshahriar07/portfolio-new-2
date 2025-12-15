@@ -405,8 +405,16 @@ const App = () => {
             ? `${themeClasses.navBg} backdrop-blur-xl shadow-2xl` 
             : `${isDark ? 'bg-zinc-950/80' : 'bg-stone-50/80'} backdrop-blur-sm shadow-xl`}
         `}>
-          <div className={`pl-4 md:pl-6 pr-4 md:pr-8 font-serif font-bold text-lg md:text-xl tracking-tighter cursor-pointer flex items-center gap-2 ${themeClasses.text}`} onClick={() => scrollToSection('home')}>
-            <Settings size={18} className={themeClasses.textSubtle} />
+          <div className={`pl-4 md:pl-6 pr-4 md:pr-8 font-serif font-bold text-lg md:text-xl tracking-tighter cursor-pointer flex items-center gap-3 ${themeClasses.text}`} onClick={() => scrollToSection('home')}>
+             <div className="w-8 h-8 rounded-full overflow-hidden border border-zinc-500/20 relative flex-shrink-0">
+                {aboutData?.profile_image ? (
+                    <img src={aboutData.profile_image} alt="Profile" className="w-full h-full object-cover" />
+                ) : (
+                    <div className={`w-full h-full flex items-center justify-center ${isDark ? 'bg-zinc-800' : 'bg-zinc-200'}`}>
+                        <Settings size={14} className={themeClasses.textSubtle} />
+                    </div>
+                )}
+            </div>
             <span>M.E.</span>
           </div>
           
