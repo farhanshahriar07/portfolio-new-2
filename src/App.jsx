@@ -184,7 +184,7 @@ const App = () => {
       const currentScrollY = mainScrollRef.current.scrollTop;
       setScrollY(currentScrollY);
       
-      const sections = ['home', 'about', 'skills', 'education', 'projects', 'achievements', 'experience', 'thesis', 'contact'];
+      const sections = ['home', 'about', 'skills', 'education', 'experience', 'projects', 'achievements', 'thesis', 'contact'];
       for (const section of sections) {
         const element = document.getElementById(section);
         if (element) {
@@ -411,7 +411,7 @@ const App = () => {
           </div>
           
           <div className="hidden md:flex items-center gap-1">
-            {['Home', 'About', 'Skills', 'Education', 'Projects', 'Achievements', 'Experience', 'Thesis'].map((item) => (
+            {['Home', 'About', 'Skills', 'Education', 'Experience', 'Projects', 'Achievements', 'Thesis'].map((item) => (
               <button
                 key={item}
                 onClick={() => scrollToSection(item.toLowerCase())}
@@ -675,6 +675,37 @@ const App = () => {
         </div>
       </section>
 
+            {/* Experience Section */}
+      <section id="experience" className={`py-16 md:py-32 px-6 ${themeClasses.sectionBg} relative z-10 border-b ${themeClasses.border}`}>
+        <div className="container mx-auto max-w-6xl">
+          <RevealOnScroll>
+            <div className="flex items-center gap-4 mb-12 md:mb-16">
+                <Clock className={themeClasses.textMuted} size={24} />
+                <h2 className={`text-3xl md:text-5xl font-serif ${themeClasses.text}`}>Professional History</h2>
+            </div>
+
+            <div className={`relative border-l ${themeClasses.border} ml-3 md:ml-0 space-y-12 md:space-y-16`}>
+              {experienceData.length > 0 ? experienceData.map((job) => (
+                <div key={job.id} className="relative pl-8 md:pl-12 group">
+                  <div className={`absolute -left-[5px] top-2 w-[9px] h-[9px] ${themeClasses.bg} border ${isDark ? 'border-zinc-500' : 'border-zinc-400'} rounded-full group-hover:${isDark ? 'bg-white' : 'bg-zinc-900'} transition-colors`}></div>
+                  
+                  <div className="grid md:grid-cols-4 gap-4 items-baseline">
+                      <span className={`font-mono text-sm ${themeClasses.textMuted} md:col-span-1`}>{job.year_range}</span>
+                      <div className="md:col-span-3">
+                        <h4 className={`text-xl md:text-2xl font-medium ${themeClasses.text} group-hover:${themeClasses.textMuted} transition-colors`}>{job.role}</h4>
+                        <div className={`${themeClasses.textSubtle} font-serif italic mb-2`}>{job.company}</div>
+                        <p className={`${themeClasses.textMuted} text-sm max-w-lg whitespace-pre-line`}>{job.description}</p>
+                      </div>
+                  </div>
+                </div>
+              )) : (
+                <p className={`pl-8 ${themeClasses.textMuted}`}>Loading experience...</p>
+              )}
+            </div>
+          </RevealOnScroll>
+        </div>
+      </section>
+
       {/* Projects - Masonry Grid */}
       <section id="projects" className={`py-16 md:py-32 px-6 ${themeClasses.sectionBg} relative z-10 border-b ${themeClasses.border}`}>
         <div className="container mx-auto max-w-6xl">
@@ -756,36 +787,7 @@ const App = () => {
         </div>
       </section>
 
-      {/* Experience Section */}
-      <section id="experience" className={`py-16 md:py-32 px-6 ${themeClasses.sectionBg} relative z-10 border-b ${themeClasses.border}`}>
-        <div className="container mx-auto max-w-6xl">
-          <RevealOnScroll>
-            <div className="flex items-center gap-4 mb-12 md:mb-16">
-                <Clock className={themeClasses.textMuted} size={24} />
-                <h2 className={`text-3xl md:text-5xl font-serif ${themeClasses.text}`}>Professional History</h2>
-            </div>
 
-            <div className={`relative border-l ${themeClasses.border} ml-3 md:ml-0 space-y-12 md:space-y-16`}>
-              {experienceData.length > 0 ? experienceData.map((job) => (
-                <div key={job.id} className="relative pl-8 md:pl-12 group">
-                  <div className={`absolute -left-[5px] top-2 w-[9px] h-[9px] ${themeClasses.bg} border ${isDark ? 'border-zinc-500' : 'border-zinc-400'} rounded-full group-hover:${isDark ? 'bg-white' : 'bg-zinc-900'} transition-colors`}></div>
-                  
-                  <div className="grid md:grid-cols-4 gap-4 items-baseline">
-                      <span className={`font-mono text-sm ${themeClasses.textMuted} md:col-span-1`}>{job.year_range}</span>
-                      <div className="md:col-span-3">
-                        <h4 className={`text-xl md:text-2xl font-medium ${themeClasses.text} group-hover:${themeClasses.textMuted} transition-colors`}>{job.role}</h4>
-                        <div className={`${themeClasses.textSubtle} font-serif italic mb-2`}>{job.company}</div>
-                        <p className={`${themeClasses.textMuted} text-sm max-w-lg whitespace-pre-line`}>{job.description}</p>
-                      </div>
-                  </div>
-                </div>
-              )) : (
-                <p className={`pl-8 ${themeClasses.textMuted}`}>Loading experience...</p>
-              )}
-            </div>
-          </RevealOnScroll>
-        </div>
-      </section>
 
       {/* Thesis Section */}
       <section id="thesis" className={`py-16 md:py-32 px-6 ${themeClasses.sectionBg} relative z-10 border-b ${themeClasses.border}`}>
