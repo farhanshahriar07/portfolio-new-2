@@ -766,7 +766,7 @@ const App = () => {
                             onChange={handleContactChange}
                             required
                             className={`w-full ${themeClasses.inputBg} border ${themeClasses.border} rounded-sm p-3 text-sm md:text-base ${themeClasses.text} focus:outline-none focus:border-zinc-500 transition-colors font-sans`} 
-                            placeholder={field === 'email' ? 'jane@example.com' : 'Jane Doe'} 
+                            placeholder={field === 'email' ? 'Your Email' : 'Your Name'} 
                         />
                       </div>
                     ))}
