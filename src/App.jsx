@@ -1,10 +1,10 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { 
   Menu, X, Linkedin, Github, Mail, Download, ArrowUpRight, 
-  Cpu, Thermometer, Box, Zap, FileText, BookOpen, ArrowLeft, 
-  Clock, ChevronRight, Send, Settings, Ruler, GitCommit,
-  Moon, Sun, Loader, GraduationCap, Facebook, Instagram, Twitter, 
-  MessageCircle, Globe, Code, Terminal, PenTool, Database, Layers, Wrench, Server, Briefcase, Building2, ArrowUp, Award
+  Settings, Ruler, GitCommit,
+  Moon, Sun, GraduationCap, Facebook, Instagram, Twitter, 
+  MessageCircle, Globe, Briefcase, Building2, ArrowUp, Award,
+  Clock, BookOpen, FileText, Send
 } from 'lucide-react';
 
 // --- Configuration ---
@@ -15,9 +15,7 @@ const API_BASE_URL = 'https://adnan-backend-eyxe.onrender.com/api';
 // --- Styles & Fonts ---
 const styles = `
   @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500&family=Inter:wght@300;400;500;600&family=Playfair+Display:ital,wght@0,400;0,600;0,800;1,400&display=swap');
-  /* Import Devicon for colored tech icons */
-  @import url("https://cdn.jsdelivr.net/gh/devicons/devicon@latest/devicon.min.css");
-
+  
   /* --- Global Resets to Fix Scrollbars --- */
   html, body {
     margin: 0;
@@ -102,7 +100,17 @@ const Marquee = ({ items, isDark }) => (
     <div className="animate-marquee whitespace-nowrap flex gap-8 md:gap-16 items-center">
       {(items.length > 0 ? items.concat(items).concat(items) : [{name: 'Loading Skills...'}]).map((item, i) => (
         <span key={i} className={`text-lg md:text-2xl font-mono mx-2 md:mx-4 flex items-center gap-3 md:gap-4 ${isDark ? 'text-zinc-600' : 'text-zinc-400'}`}>
-          <GitCommit size={14} className={isDark ? 'text-zinc-700' : 'text-zinc-400'} /> {item.name || item}
+          {/* UPDATED: Uses API image if available, else falls back to GitCommit icon */}
+          {item.image_url ? (
+            <img 
+              src={item.image_url} 
+              alt="" 
+              className={`w-6 h-6 object-contain ${isDark ? 'grayscale opacity-70' : 'opacity-50'}`} 
+            />
+          ) : (
+            <GitCommit size={14} className={isDark ? 'text-zinc-700' : 'text-zinc-400'} /> 
+          )}
+          {item.name || item}
         </span>
       ))}
     </div>
@@ -189,8 +197,6 @@ const App = () => {
         const element = document.getElementById(section);
         if (element) {
           const rect = element.getBoundingClientRect();
-          // Adjust threshold for detection since we are scrolling within a container
-          // rect.top is relative to viewport, so logic mostly stays same
           if (rect.top <= 200 && rect.bottom >= 200) {
             setActiveSection(section);
           }
@@ -208,7 +214,7 @@ const App = () => {
             scrollContainer.removeEventListener('scroll', handleScroll);
         }
     };
-  }, [loading]); // Re-run when loading finishes to ensure ref is attached
+  }, [loading]);
 
   const scrollToSection = (id) => {
     setIsMenuOpen(false);
@@ -249,7 +255,6 @@ const App = () => {
     
     const links = [];
     
-    // Check specific fields from your models.py About class
     if (aboutData.email) links.push({ icon: Mail, text: aboutData.email, href: `mailto:${aboutData.email}` });
     if (aboutData.website) links.push({ icon: Globe, text: 'Website', href: aboutData.website });
     if (aboutData.github) links.push({ icon: Github, text: 'GitHub', href: aboutData.github });
@@ -258,7 +263,6 @@ const App = () => {
     if (aboutData.instagram) links.push({ icon: Instagram, text: 'Instagram', href: aboutData.instagram });
     if (aboutData.twitter) links.push({ icon: Twitter, text: 'Twitter', href: aboutData.twitter });
     
-    // WhatsApp logic - ensure it handles just numbers or full links
     if (aboutData.whatsapp) {
         let waLink = aboutData.whatsapp;
         if (!waLink.startsWith('http')) {
@@ -272,83 +276,12 @@ const App = () => {
 
   const contactLinks = getContactLinks();
 
-  // --- Helper to get Skill Asset (Devicon > Simple Icons > Lucide) ---
-  const getSkillAsset = (skillName) => {
-    const lower = skillName.toLowerCase();
-    
-    // 1. Devicon Mapping (Preferred for Dev Tools - Colored)
-    const deviconMap = [
-        { term: 'python', class: 'devicon-python-plain colored' },
-        { term: 'java', class: 'devicon-java-plain colored' }, 
-        { term: 'js', class: 'devicon-javascript-plain colored' },
-        { term: 'javascript', class: 'devicon-javascript-plain colored' },
-        { term: 'react', class: 'devicon-react-original colored' },
-        { term: 'html', class: 'devicon-html5-plain colored' },
-        { term: 'css', class: 'devicon-css3-plain colored' },
-        { term: 'c++', class: 'devicon-cplusplus-plain colored' },
-        { term: 'cpp', class: 'devicon-cplusplus-plain colored' },
-        { term: 'c#', class: 'devicon-csharp-plain colored' },
-        { term: 'git', class: 'devicon-git-plain colored' },
-        { term: 'docker', class: 'devicon-docker-plain colored' },
-        { term: 'flask', class: 'devicon-flask-original colored' },
-        { term: 'matlab', class: 'devicon-matlab-plain colored' },
-        { term: 'arduino', class: 'devicon-arduino-plain colored' },
-        { term: 'latex', class: 'devicon-latex-original colored' },
-        { term: 'linux', class: 'devicon-linux-plain colored' },
-        { term: 'ubuntu', class: 'devicon-ubuntu-plain colored' },
-        { term: 'blender', class: 'devicon-blender-original colored' },
-        { term: 'photoshop', class: 'devicon-photoshop-plain colored' },
-        { term: 'illustrator', class: 'devicon-illustrator-plain colored' },
-        { term: 'figma', class: 'devicon-figma-plain colored' },
-        { term: 'node', class: 'devicon-nodejs-plain colored' },
-        { term: 'tailwind', class: 'devicon-tailwindcss-original colored' },
-    ];
-
-    const deviconMatch = deviconMap.find(m => lower.includes(m.term));
-    if (deviconMatch) {
-        return { type: 'devicon', className: deviconMatch.class };
-    }
-
-    // 2. Simple Icons (Preferred for Engineering/CAD Brands missing in Devicon)
-    const brandMap = [
-      { term: 'solidworks', slug: 'dassaultsystemes' },
-      { term: 'ansys', slug: 'ansys' },
-      { term: 'autocad', slug: 'autodesk' },
-      { term: 'fusion', slug: 'autodesk' },
-      { term: 'microsoft office', slug: 'microsoft' }, 
-      { term: 'office', slug: 'microsoft365' }, 
-      { term: 'word', slug: 'microsoftword' },
-      { term: 'excel', slug: 'microsoftexcel' },
-      { term: 'powerpoint', slug: 'microsoftpowerpoint' },
-    ];
-
-    const brandMatch = brandMap.find(brand => lower.includes(brand.term));
-    if (brandMatch) {
-      return { 
-        type: 'image', 
-        src: `https://cdn.simpleicons.org/${brandMatch.slug}` 
-      };
-    }
-
-    // 3. Lucide Fallbacks (Generic)
-    if (lower.includes('script') || lower.includes('code')) return { type: 'icon', component: Terminal };
-    if (lower.includes('design') || lower.includes('cad')) return { type: 'icon', component: PenTool };
-    if (lower.includes('analysis') || lower.includes('fea')) return { type: 'icon', component: Thermometer };
-    if (lower.includes('circuit') || lower.includes('electronic') || lower.includes('pcb')) return { type: 'icon', component: Zap };
-    if (lower.includes('database') || lower.includes('sql') || lower.includes('mongo')) return { type: 'icon', component: Database };
-    if (lower.includes('sys') || lower.includes('server')) return { type: 'icon', component: Server };
-    if (lower.includes('mech') || lower.includes('robot') || lower.includes('engineer')) return { type: 'icon', component: Wrench };
-    if (lower.includes('manage') || lower.includes('lead')) return { type: 'icon', component: Layers };
-    
-    return { type: 'icon', component: Cpu }; // Default
-  };
-
   // --- Theme Colors Helper ---
   const themeClasses = {
     bg: isDark ? 'bg-zinc-950' : 'bg-stone-50',
-    text: isDark ? 'text-white' : 'text-zinc-900', // Changed to pure white for better contrast
-    textMuted: isDark ? 'text-zinc-300' : 'text-zinc-500', // Lighter grey for better readability
-    textSubtle: isDark ? 'text-zinc-400' : 'text-zinc-400', // Lighter subtle text
+    text: isDark ? 'text-white' : 'text-zinc-900', 
+    textMuted: isDark ? 'text-zinc-300' : 'text-zinc-500',
+    textSubtle: isDark ? 'text-zinc-400' : 'text-zinc-400', 
     border: isDark ? 'border-zinc-800' : 'border-zinc-200',
     cardBg: isDark ? 'bg-zinc-900' : 'bg-white',
     navBg: isDark ? 'bg-zinc-900/80' : 'bg-white/80',
@@ -371,11 +304,6 @@ const App = () => {
   }
 
   return (
-    // Single Scroll Container setup:
-    // 1. 'h-screen' locks the height to viewport height.
-    // 2. 'overflow-y-auto' enables vertical scrolling ONLY on this div.
-    // 3. 'overflow-x-hidden' prevents horizontal scrollbars.
-    // 4. 'ref={mainScrollRef}' allows us to attach scroll listener to this specific container.
     <div 
         ref={mainScrollRef}
         className={`h-screen w-full ${themeClasses.bg} ${themeClasses.text} font-sans transition-colors duration-500 overflow-y-auto overflow-x-hidden relative scroll-smooth`}
@@ -514,7 +442,7 @@ const App = () => {
           
           <div className="grid md:grid-cols-3 gap-8 md:gap-12 items-end mt-12">
             <div className={`md:col-span-1 border-l ${themeClasses.border} pl-6`}>
-                <p className={`text-base md:text-lg ${themeClasses.textMuted} leading-relaxed font-normal`}> {/* Removed font-light */}
+                <p className={`text-base md:text-lg ${themeClasses.textMuted} leading-relaxed font-normal`}> 
                   {aboutData?.short_bio || "Mechanical Engineer focused on bridging the gap between rigorous analysis and functional aesthetics."}
                 </p>
             </div>
@@ -528,8 +456,6 @@ const App = () => {
             </div>
           </div>
         </div>
-
-        
       </section>
 
       {/* Marquee Skills */}
@@ -547,28 +473,9 @@ const App = () => {
                 <h2 className={`text-3xl md:text-5xl font-serif mb-8 leading-tight ${themeClasses.text}`}>
                   Applying <span className={`italic ${themeClasses.textMuted}`}>first principles</span> to solve complex physical problems.
                 </h2>
-                <div className={`space-y-6 text-lg ${themeClasses.textMuted} leading-relaxed font-normal whitespace-pre-wrap mb-10`}> {/* Removed font-light */}
+                <div className={`space-y-6 text-lg ${themeClasses.textMuted} leading-relaxed font-normal whitespace-pre-wrap mb-10`}> 
                   {aboutData?.long_bio || "I believe that great engineering is indistinguishable from art. Whether it's optimizing a thermal system or designing a chassis, the goal is always elegance in efficiency."}
                 </div>
-
-                {/* <div className="grid grid-cols-1 sm:grid-cols-2 gap-y-6 gap-x-4">
-                    {[
-                        { label: "Birthday", value: aboutData?.birthday },
-                        { label: "Website", value: aboutData?.website },
-                        { label: "Phone", value: aboutData?.phone },
-                        { label: "City", value: aboutData?.city },
-                        { label: "Degree", value: aboutData?.degree },
-                        { label: "Email", value: aboutData?.email },
-                        { label: "Freelance", value: aboutData?.freelance_status },
-                    ].map((info, i) => (
-                        info.value && (
-                            <div key={i}>
-                                <span className={`block text-xs uppercase tracking-widest ${themeClasses.textMuted} mb-1 font-mono opacity-70`}>{info.label}:</span>
-                                <span className={`${themeClasses.text} font-medium break-all`}>{info.value}</span>
-                            </div>
-                        )
-                    ))}
-                </div> */}
               </div>
               <div className="relative">
                   <div 
@@ -598,36 +505,25 @@ const App = () => {
         <div className="container mx-auto max-w-6xl">
           <RevealOnScroll>
             <div className="flex items-center gap-4 mb-12 md:mb-16">
-               <Cpu className={themeClasses.textMuted} size={24} />
+               <Settings className={themeClasses.textMuted} size={24} />
                <h2 className={`text-3xl md:text-5xl font-serif ${themeClasses.text}`}>Technical Proficiency</h2>
             </div>
 
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
-               {skillsData.length > 0 ? skillsData.map((skill, index) => {
-                  const asset = getSkillAsset(skill.name);
-                  
-                  return (
+               {skillsData.length > 0 ? skillsData.map((skill, index) => (
                     <div key={skill.id || index} className={`p-4 md:p-6 border ${themeClasses.border} rounded-sm flex flex-col items-center justify-center gap-4 group hover:bg-zinc-500/5 transition-colors`}>
-                        {asset.type === 'devicon' ? (
-                            <i className={`${asset.className} text-3xl md:text-4xl transition-transform group-hover:scale-110`}></i>
-                        ) : asset.type === 'image' ? (
-                            <img 
-                                src={asset.src} 
-                                alt={skill.name} 
-                                className={`w-8 h-8 object-contain transition-transform group-hover:scale-110 ${isDark ? 'dark-icon-glow' : ''}`} 
-                            />
-                        ) : (
-                            <asset.component 
-                                size={32} 
-                                className={`${themeClasses.textSubtle} group-hover:${themeClasses.text} transition-colors group-hover:scale-110`} 
-                            />
-                        )}
+                        {/* UPDATED: Directly using image_url from API */}
+                        <img 
+                            src={skill.image_url} 
+                            alt={skill.name} 
+                            className={`w-12 h-12 object-contain transition-transform group-hover:scale-110 ${isDark ? 'dark-icon-glow' : ''}`} 
+                        />
+                        
                         <span className={`font-mono text-xs md:text-sm uppercase tracking-wide text-center ${themeClasses.text}`}>
                           {skill.name}
                         </span>
                     </div>
-                  );
-               }) : (
+                  )) : (
                   <div className={`col-span-full text-center py-10 ${themeClasses.textMuted}`}>No skills loaded.</div>
                )}
             </div>
@@ -649,9 +545,7 @@ const App = () => {
                 <div key={edu.id} className="relative pl-8 md:pl-12 group">
                   <div className={`absolute -left-[5px] top-2 w-[9px] h-[9px] ${themeClasses.bg} border ${isDark ? 'border-zinc-500' : 'border-zinc-400'} rounded-full group-hover:${isDark ? 'bg-white' : 'bg-zinc-900'} transition-colors`}></div>
                   
-                  {/* Updated Layout for Education Item */}
                   <div className="grid md:grid-cols-4 gap-4 items-start">
-                      {/* Left Column: University Logo Placeholder - Adjusted for mobile */}
                       <div className={`md:col-span-1 flex justify-start`}>
                           <div className={`w-32 h-32 md:w-32 md:h-32 rounded-xl border ${themeClasses.border} ${isDark ? 'bg-zinc-800/50' : 'bg-white'} flex items-center justify-center dark-logo-glow overflow-hidden shrink-0`}>
                              {edu.logo_url ? (
@@ -662,7 +556,6 @@ const App = () => {
                           </div>
                       </div>
                       
-                      {/* Right Column: Content */}
                       <div className="md:col-span-3">
                         <h4 className={`text-xl md:text-2xl font-medium ${themeClasses.text} group-hover:${themeClasses.textMuted} transition-colors`}>{edu.degree}</h4>
                         
@@ -683,7 +576,7 @@ const App = () => {
         </div>
       </section>
 
-            {/* Experience Section */}
+      {/* Experience Section */}
       <section id="experience" className={`py-16 md:py-32 px-6 ${themeClasses.sectionBg} relative z-10 border-b ${themeClasses.border}`}>
         <div className="container mx-auto max-w-6xl">
           <RevealOnScroll>
@@ -776,12 +669,10 @@ const App = () => {
                 <div key={achievement.id} className={`group ${themeClasses.cardBg} p-6 md:p-8 rounded-sm border ${themeClasses.border} hover:${isDark ? 'border-zinc-600' : 'border-zinc-400'} transition-all hover:-translate-y-1 relative`}>
                    <div className="flex justify-between items-start mb-4">
                       <h4 className={`text-lg md:text-xl font-serif ${themeClasses.text} group-hover:${themeClasses.textMuted} transition-colors`}>{achievement.title}</h4>
-                      {/* Assuming 'year' or 'date' is present in your backend response for achievements */}
                       {(achievement.year || achievement.date) && (
                         <span className={`font-mono text-xs ${themeClasses.textMuted} border ${themeClasses.border} px-2 py-1 rounded-full shrink-0 ml-2`}>{achievement.year || achievement.date}</span>
                       )}
                    </div>
-                   {/* Assuming 'organization' or similar field exists */}
                    {achievement.organization && (
                      <p className={`${themeClasses.textSubtle} font-medium mb-2`}>{achievement.organization}</p>
                    )}
@@ -795,14 +686,12 @@ const App = () => {
         </div>
       </section>
 
-
-
       {/* Thesis Section */}
       <section id="thesis" className={`py-16 md:py-32 px-6 ${themeClasses.sectionBg} relative z-10 border-b ${themeClasses.border}`}>
         <div className="container mx-auto max-w-6xl">
           <RevealOnScroll>
-            <div className="flex items-center gap-4 mb-12 md:mb-16"> {/* Removed justify-end text-right */}
-                <BookOpen className={themeClasses.textMuted} size={24} /> {/* Moved icon to start */}
+            <div className="flex items-center gap-4 mb-12 md:mb-16">
+                <BookOpen className={themeClasses.textMuted} size={24} />
                 <div>
                   <h2 className={`text-3xl md:text-5xl font-serif ${themeClasses.text}`}>Research & Publications</h2>
                   <span className={`font-mono text-xs ${themeClasses.textMuted}`}>ACADEMIC ARCHIVE</span>
@@ -833,8 +722,6 @@ const App = () => {
         </div>
       </section>
 
-
-
       {/* Contact / Footer */}
       <section id="contact" className={`pt-16 pb-8 md:pt-32 md:pb-10 px-4 md:px-6 ${themeClasses.sectionBg} relative z-10`}>
         <div className="container mx-auto max-w-6xl">
@@ -846,7 +733,6 @@ const App = () => {
                   {aboutData?.freelance_status || "Available for freelance design engineering projects, consulting, and robotic systems development."}
                 </p>
                 <div className="space-y-4 md:space-y-6">
-                  {/* Dynamic Contact Links - Only showing 8 specific types */}
                   {contactLinks.map((link, i) => (
                     <a key={i} href={link.href || '#'} target={link.href && link.href.startsWith('http') ? '_blank' : '_self'} rel="noopener noreferrer" className={`flex items-center gap-4 ${themeClasses.textSubtle} hover:${themeClasses.text} transition-colors group`}>
                       <link.icon size={20} className="group-hover:scale-110 transition-transform"/>
@@ -909,7 +795,6 @@ const App = () => {
             
             <div className={`mt-10 pt-8 border-t ${themeClasses.border} flex flex-col md:flex-row justify-between text-xs md:text-sm ${themeClasses.textSubtle} font-mono gap-4 items-center text-center md:text-left`}>
               <span>© {new Date().getFullYear()} {aboutData?.name || "Md. Adnan Ahmed"}</span>
-              {/* <span>Made with React & Flask</span> */}
             </div>
           </RevealOnScroll>
         </div>
