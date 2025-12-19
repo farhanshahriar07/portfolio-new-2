@@ -330,7 +330,7 @@ const App = () => {
                 <img src={aboutData.profile_image} alt="Profile" className="w-full h-full object-cover" />
             ) : (
                 <div className={`w-full h-full flex items-center justify-center ${isDark ? 'bg-zinc-800' : 'bg-zinc-200'}`}>
-                    <Settings size={50} className={themeClasses.textSubtle} />
+                    <Settings size={20} className={themeClasses.textSubtle} />
                 </div>
             )}
          </div>
@@ -346,9 +346,13 @@ const App = () => {
             : `${isDark ? 'bg-zinc-950/80' : 'bg-stone-50/80'} backdrop-blur-sm shadow-xl`}
         `}>
           <div className={`pl-4 md:pl-2 pr-4 md:pr-8 font-serif font-bold text-lg md:text-xl tracking-tighter cursor-pointer flex items-center gap-3 ${themeClasses.text}`} onClick={() => scrollToSection('home')}>
-             {/* Updated: Replaced Image with Gear Icon */}
+             {/* Updated: Replaced Image with Gear Icon that ROTATES on scroll */}
              <div className="p-2 rounded-full overflow-hidden border border-zinc-500/20 relative flex-shrink-0 flex items-center justify-center">
-                <Settings size={24} className={`${themeClasses.text} hover:rotate-180 transition-transform duration-500`} />
+                <Settings 
+                    size={20} 
+                    className={`${themeClasses.text}`} 
+                    style={{ transform: `rotate(${scrollY * 0.4}deg)` }}
+                />
             </div>
             <span>M.E.</span>
           </div>
