@@ -100,7 +100,6 @@ const Marquee = ({ items, isDark }) => (
     <div className="animate-marquee whitespace-nowrap flex gap-8 md:gap-16 items-center">
       {(items.length > 0 ? items.concat(items).concat(items) : [{name: 'Loading Skills...'}]).map((item, i) => (
         <span key={i} className={`text-lg md:text-2xl font-mono mx-2 md:mx-4 flex items-center gap-3 md:gap-4 ${isDark ? 'text-zinc-600' : 'text-zinc-400'}`}>
-          {/* UPDATED: Uses API image if available, else falls back to GitCommit icon */}
           {item.image_url ? (
             <img 
               src={item.image_url} 
@@ -324,6 +323,19 @@ const App = () => {
         <Settings size={400} strokeWidth={0.5} />
       </div>
 
+      {/* --- Fixed Top Left Profile Image (New) --- */}
+      <div className="fixed top-7 left-7 z-50 hidden md:block">
+         <div className={`w-12 h-12 rounded-full overflow-hidden border-2 ${themeClasses.border} shadow-xl transition-transform hover:scale-105 duration-300`}>
+            {aboutData?.profile_image ? (
+                <img src={aboutData.profile_image} alt="Profile" className="w-full h-full object-cover" />
+            ) : (
+                <div className={`w-full h-full flex items-center justify-center ${isDark ? 'bg-zinc-800' : 'bg-zinc-200'}`}>
+                    <Settings size={50} className={themeClasses.textSubtle} />
+                </div>
+            )}
+         </div>
+      </div>
+
       {/* --- Floating Pill Navigation --- */}
       <nav className="fixed top-4 md:top-6 left-0 right-0 z-50 flex justify-center px-4">
         <div className={`
@@ -333,15 +345,10 @@ const App = () => {
             ? `${themeClasses.navBg} backdrop-blur-xl shadow-2xl` 
             : `${isDark ? 'bg-zinc-950/80' : 'bg-stone-50/80'} backdrop-blur-sm shadow-xl`}
         `}>
-          <div className={`pl-4 md:pl-6 pr-4 md:pr-8 font-serif font-bold text-lg md:text-xl tracking-tighter cursor-pointer flex items-center gap-3 ${themeClasses.text}`} onClick={() => scrollToSection('home')}>
-             <div className="w-8 h-8 rounded-full overflow-hidden border border-zinc-500/20 relative flex-shrink-0">
-                {aboutData?.profile_image ? (
-                    <img src={aboutData.profile_image} alt="Profile" className="w-full h-full object-cover" />
-                ) : (
-                    <div className={`w-full h-full flex items-center justify-center ${isDark ? 'bg-zinc-800' : 'bg-zinc-200'}`}>
-                        <Settings size={14} className={themeClasses.textSubtle} />
-                    </div>
-                )}
+          <div className={`pl-4 md:pl-2 pr-4 md:pr-8 font-serif font-bold text-lg md:text-xl tracking-tighter cursor-pointer flex items-center gap-3 ${themeClasses.text}`} onClick={() => scrollToSection('home')}>
+             {/* Updated: Replaced Image with Gear Icon */}
+             <div className="p-2 rounded-full overflow-hidden border border-zinc-500/20 relative flex-shrink-0 flex items-center justify-center">
+                <Settings size={24} className={`${themeClasses.text} hover:rotate-180 transition-transform duration-500`} />
             </div>
             <span>M.E.</span>
           </div>
