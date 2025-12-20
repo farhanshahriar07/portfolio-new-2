@@ -327,8 +327,8 @@ const App = () => {
       {/* --- Fixed Top Left Profile Image (New) --- */}
       <div className="fixed top-7 left-7 z-50 hidden md:block">
          <div className={`w-12 h-12 rounded-full overflow-hidden border-2 ${themeClasses.border} shadow-xl transition-transform hover:scale-105 duration-300`}>
-            {aboutData?.profile_image ? (
-                <img src={aboutData.profile_image} alt="Profile" className="w-full h-full object-cover" />
+            {aboutData?.mini_profile_image ? (
+                <img src={aboutData.mini_profile_image} alt="Profile" className="w-full h-full object-cover" />
             ) : (
                 <div className={`w-full h-full flex items-center justify-center ${isDark ? 'bg-zinc-800' : 'bg-zinc-200'}`}>
                     <Settings size={20} className={themeClasses.textSubtle} />
