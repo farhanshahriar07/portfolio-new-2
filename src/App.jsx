@@ -132,7 +132,7 @@ const App = () => {
   const [educationData, setEducationData] = useState([]);
   const [projectsData, setProjectsData] = useState([]);
   const [experienceData, setExperienceData] = useState([]);
-  const [thesisData, setThesisData] = useState([]);
+  const [researchData, setResearchData] = useState([]);
   const [achievementsData, setAchievementsData] = useState([]);
   
   // Contact Form State
@@ -156,13 +156,13 @@ const App = () => {
   useEffect(() => {
     const fetchAllData = async () => {
       try {
-        const [aboutRes, skillsRes, eduRes, projectsRes, expRes, thesisRes, achievementsRes] = await Promise.all([
+        const [aboutRes, skillsRes, eduRes, projectsRes, expRes, researchRes, achievementsRes] = await Promise.all([
           fetch(`${API_BASE_URL}/about`),
           fetch(`${API_BASE_URL}/skills`),
           fetch(`${API_BASE_URL}/education`),
           fetch(`${API_BASE_URL}/projects`),
           fetch(`${API_BASE_URL}/experience`),
-          fetch(`${API_BASE_URL}/thesis`),
+          fetch(`${API_BASE_URL}/research`),
           fetch(`${API_BASE_URL}/achievements`)
         ]);
 
@@ -171,7 +171,7 @@ const App = () => {
         if (eduRes.ok) setEducationData(await eduRes.json());
         if (projectsRes.ok) setProjectsData(await projectsRes.json());
         if (expRes.ok) setExperienceData(await expRes.json());
-        if (thesisRes.ok) setThesisData(await thesisRes.json());
+        if (researchRes.ok) setResearchData(await researchRes.json());
         if (achievementsRes.ok) setAchievementsData(await achievementsRes.json());
       } catch (error) {
         console.error("Failed to fetch data:", error);
@@ -191,7 +191,7 @@ const App = () => {
       const currentScrollY = mainScrollRef.current.scrollTop;
       setScrollY(currentScrollY);
       
-      const sections = ['home', 'about', 'skills', 'education', 'experience', 'projects', 'achievements', 'thesis', 'contact'];
+      const sections = ['home', 'about', 'skills', 'education', 'experience', 'projects', 'achievements', 'research', 'contact'];
       for (const section of sections) {
         const element = document.getElementById(section);
         if (element) {
@@ -358,7 +358,7 @@ const App = () => {
           </div>
           
           <div className="hidden md:flex items-center gap-1">
-            {['Home', 'About', 'Skills', 'Education', 'Experience', 'Projects', 'Achievements', 'Thesis'].map((item) => (
+            {['Home', 'About', 'Skills', 'Education', 'Experience', 'Projects', 'Achievements', 'Research'].map((item) => (
               <button
                 key={item}
                 onClick={() => scrollToSection(item.toLowerCase())}
@@ -412,7 +412,7 @@ const App = () => {
       {/* Mobile Menu Overlay */}
       <div className={`fixed inset-0 ${themeClasses.bg} z-40 pt-28 px-6 md:hidden transition-all duration-500 transform ${isMenuOpen ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-full pointer-events-none'}`}>
         <div className="flex flex-col gap-6 text-center h-full overflow-y-auto pb-10">
-          {['Home', 'About', 'Skills', 'Education', 'Projects', 'Achievements', 'Experience', 'Thesis', 'Contact'].map((item) => (
+          {['Home', 'About', 'Skills', 'Education', 'Projects', 'Achievements', 'Experience', 'Research', 'Contact'].map((item) => (
             <button 
               key={item}
               onClick={() => scrollToSection(item.toLowerCase())}
@@ -697,8 +697,8 @@ const App = () => {
         </div>
       </section>
 
-      {/* Thesis Section */}
-      <section id="thesis" className={`py-16 md:py-32 px-6 ${themeClasses.sectionBg} relative z-10 border-b ${themeClasses.border}`}>
+      {/* Research Section */}
+      <section id="research" className={`py-16 md:py-32 px-6 ${themeClasses.sectionBg} relative z-10 border-b ${themeClasses.border}`}>
         <div className="container mx-auto max-w-6xl">
           <RevealOnScroll>
             <div className="flex items-center gap-4 mb-12 md:mb-16">
@@ -710,7 +710,7 @@ const App = () => {
             </div>
 
             <div className="grid md:grid-cols-3 gap-6">
-                {thesisData.length > 0 ? thesisData.map((paper) => (
+                {researchData.length > 0 ? researchData.map((paper) => (
                   <div key={paper.id} className={`group ${themeClasses.cardBg} p-6 md:p-8 rounded-sm border ${themeClasses.border} hover:${isDark ? 'border-zinc-600' : 'border-zinc-400'} transition-all hover:-translate-y-1 relative overflow-hidden shadow-sm`}>
                       <div className="absolute top-0 right-0 p-4 opacity-10">
                         <FileText size={40} />
