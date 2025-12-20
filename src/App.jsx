@@ -282,6 +282,7 @@ const App = () => {
     textMuted: isDark ? 'text-zinc-300' : 'text-zinc-500',
     textSubtle: isDark ? 'text-zinc-400' : 'text-zinc-400', 
     border: isDark ? 'border-zinc-800' : 'border-zinc-200',
+    borderContact: isDark ? 'border-zinc-700' : 'border-zinc-300',
     cardBg: isDark ? 'bg-zinc-900' : 'bg-white',
     navBg: isDark ? 'bg-zinc-900/80' : 'bg-white/80',
     navBorder: isDark ? 'border-zinc-800' : 'border-zinc-200',
@@ -747,7 +748,7 @@ const App = () => {
                   {contactLinks.map((link, i) => (
                     <a key={i} href={link.href || '#'} target={link.href && link.href.startsWith('http') ? '_blank' : '_self'} rel="noopener noreferrer" className={`flex items-center gap-4 ${themeClasses.textSubtle} hover:${themeClasses.text} transition-colors group`}>
                       <link.icon size={20} className="group-hover:scale-110 transition-transform"/>
-                      <span className="text-sm md:text-base">{link.href}</span>
+                      <span className="text-sm md:text-base">{link.text}</span>
                     </a>
                   ))}
                 </div>
@@ -765,7 +766,7 @@ const App = () => {
                             value={contactForm[field]}
                             onChange={handleContactChange}
                             required
-                            className={`w-full ${themeClasses.inputBg} border ${themeClasses.border} rounded-sm p-3 text-sm md:text-base ${themeClasses.text} focus:outline-none focus:border-zinc-500 transition-colors font-sans`} 
+                            className={`w-full ${themeClasses.inputBg} border-2 ${themeClasses.borderContact} rounded-sm p-3 text-sm md:text-base ${themeClasses.text} focus:outline-none focus:border-zinc-500 transition-colors font-sans`} 
                             placeholder={field === 'email' ? 'Your Email' : 'Your Name'} 
                         />
                       </div>
@@ -778,7 +779,7 @@ const App = () => {
                         name="subject"
                         value={contactForm.subject}
                         onChange={handleContactChange}
-                        className={`w-full ${themeClasses.inputBg} border ${themeClasses.border} rounded-sm p-3 text-sm md:text-base ${themeClasses.text} focus:outline-none focus:border-zinc-500 transition-colors font-sans`} 
+                        className={`w-full ${themeClasses.inputBg} border-2 ${themeClasses.borderContact} rounded-sm p-3 text-sm md:text-base ${themeClasses.text} focus:outline-none focus:border-zinc-500 transition-colors font-sans`} 
                         placeholder="Project Inquiry" 
                     />
                   </div>
@@ -790,7 +791,7 @@ const App = () => {
                         onChange={handleContactChange}
                         required
                         rows="4" 
-                        className={`w-full ${themeClasses.inputBg} border ${themeClasses.border} rounded-sm p-3 text-sm md:text-base ${themeClasses.text} focus:outline-none focus:border-zinc-500 transition-colors resize-none font-sans`} 
+                        className={`w-full ${themeClasses.inputBg} border-2 ${themeClasses.borderContact} rounded-sm p-3 text-sm md:text-base ${themeClasses.text} focus:outline-none focus:border-zinc-500 transition-colors resize-none font-sans`} 
                         placeholder="Tell me about your project needs..."
                     ></textarea>
                   </div>
