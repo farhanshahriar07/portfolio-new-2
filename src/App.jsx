@@ -355,7 +355,7 @@ const App = () => {
                     style={{ transform: `rotate(${scrollY * 0.4}deg)` }}
                 />
             </div>
-            <span>M.E.</span>
+            {/* <span>M.E.</span> */}
           </div>
           
           <div className="hidden md:flex items-center gap-1">
