@@ -371,7 +371,7 @@ const App = () => {
             
             <button 
                onClick={() => scrollToSection('contact')}
-               className={`ml-2 px-4 py-2 rounded-full text-xs lg:text-sm font-medium border ${themeClasses.border} hover:bg-zinc-500/10 transition-colors`}
+               className={`ml-2 px-4 py-2 rounded-full text-xs lg:text-sm font-medium border ${activeSection === 'contact' ? `${isDark ? 'bg-white text-zinc-900' : 'bg-zinc-900 text-white'} ${themeClasses.border} shadow-sm` : `${themeClasses.border} ${themeClasses.textMuted} hover:${themeClasses.text}`}`}
             >
               Contact
             </button>
