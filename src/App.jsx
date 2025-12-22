@@ -564,7 +564,7 @@ const App = () => {
                     <div className="md:col-span-2 flex flex-col sm:flex-row justify-start md:justify-end gap-4">
                     {/* UPDATED: Changed 'View Work' to 'Journey' */}
                     <button onClick={handleViewJourney} className={`${isDark ? 'bg-white text-zinc-900 hover:bg-zinc-200' : 'bg-zinc-900 text-white hover:bg-zinc-800'} px-8 py-4 rounded-full font-medium transition-colors flex items-center justify-center gap-2 w-full sm:w-auto shadow-lg`}>
-                        Journey <MapPin size={18} />
+                        My Journey <MapPin size={18} />
                     </button>
                     <button onClick={() => scrollToSection('contact')} className={`bg-transparent border ${isDark ? 'border-zinc-700 text-white hover:bg-zinc-900' : 'border-zinc-300 text-zinc-900 hover:bg-zinc-100'} px-8 py-4 rounded-full font-medium transition-colors w-full sm:w-auto`}>
                         Get in Touch
