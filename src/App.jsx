@@ -1,10 +1,10 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { 
   Menu, X, Linkedin, Github, Mail, Download, ArrowUpRight, 
   Settings, Ruler, GitCommit,
   Moon, Sun, GraduationCap, Facebook, Instagram, Twitter, 
   MessageCircle, Globe, Briefcase, Building2, ArrowUp, Award,
-  Clock, BookOpen, FileText, Send, ArrowLeft, PenTool, Calendar
+  Clock, BookOpen, FileText, Send, ArrowLeft, PenTool, Calendar, MapPin
 } from 'lucide-react';
 
 // --- Configuration ---
@@ -128,8 +128,8 @@ const App = () => {
   const [scrollY, setScrollY] = useState(0);
   const [theme, setTheme] = useState('dark');
   
-  // View State for Blog System
-  const [currentView, setCurrentView] = useState('home'); // 'home', 'all-blogs', 'single-blog'
+  // View State
+  const [currentView, setCurrentView] = useState('home'); // 'home', 'all-blogs', 'single-blog', 'journey'
   const [selectedBlog, setSelectedBlog] = useState(null);
 
   // Create a ref for the main scrollable container
@@ -144,7 +144,7 @@ const App = () => {
   const [experienceData, setExperienceData] = useState([]);
   const [researchData, setResearchData] = useState([]);
   const [achievementsData, setAchievementsData] = useState([]);
-  const [blogsData, setBlogsData] = useState([]); // New Blog State
+  const [blogsData, setBlogsData] = useState([]); 
   
   // Contact Form State
   const [contactForm, setContactForm] = useState({ name: '', email: '', subject: '', message: '' });
@@ -175,7 +175,7 @@ const App = () => {
           fetch(`${API_BASE_URL}/experience`),
           fetch(`${API_BASE_URL}/research`),
           fetch(`${API_BASE_URL}/achievements`),
-          fetch(`${API_BASE_URL}/blogs`) // Added Fetch for Blogs
+          fetch(`${API_BASE_URL}/blogs`) 
         ]);
 
         if (aboutRes.ok) setAboutData(await aboutRes.json());
@@ -232,10 +232,8 @@ const App = () => {
   }, [loading, currentView]);
 
   const scrollToSection = (id) => {
-    // If not on home view, go home first then scroll
     if (currentView !== 'home') {
         setCurrentView('home');
-        // Give React a moment to render Home before scrolling
         setTimeout(() => {
             const element = document.getElementById(id);
             if (element) element.scrollIntoView({ behavior: 'smooth' });
@@ -247,7 +245,7 @@ const App = () => {
     setIsMenuOpen(false);
   };
 
-  // --- Blog Navigation Helpers ---
+  // --- Navigation Helpers ---
   const handleViewAllBlogs = () => {
     setCurrentView('all-blogs');
     scrollToTop();
@@ -259,12 +257,16 @@ const App = () => {
     scrollToTop();
   };
 
+  const handleViewJourney = () => {
+    setCurrentView('journey');
+    scrollToTop();
+  }
+
   const handleBackToHome = () => {
     setCurrentView('home');
+    // Scroll to top of home or just reset
     setTimeout(() => {
-        // Optional: scroll back to blogs section
-        const element = document.getElementById('blogs');
-        if (element) element.scrollIntoView();
+         if (mainScrollRef.current) mainScrollRef.current.scrollTo({ top: 0 });
     }, 100);
   };
 
@@ -297,6 +299,38 @@ const App = () => {
       setSending(false);
     }
   };
+
+  // --- Data Merging for Journey ---
+  const journeyTimeline = useMemo(() => {
+    // 1. Normalize Education Data
+    const edu = educationData.map(e => ({
+        id: `edu-${e.id}`,
+        type: 'education',
+        title: e.degree,
+        subtitle: e.institution,
+        year_range: e.year_range,
+        description: e.description,
+        image_url: e.logo_url,
+        // Helper for sorting: Extract first 4 digit number
+        sortYear: parseInt(e.year_range?.match(/\d{4}/)?.[0] || "0")
+    }));
+
+    // 2. Normalize Experience Data
+    const exp = experienceData.map(e => ({
+        id: `exp-${e.id}`,
+        type: 'work',
+        title: e.role,
+        subtitle: e.company,
+        year_range: e.year_range,
+        description: e.description,
+        image_url: e.logo_url,
+        sortYear: parseInt(e.year_range?.match(/\d{4}/)?.[0] || "0")
+    }));
+
+    // 3. Combine and Sort (Ascending: Oldest first)
+    // Note: Video suggests chronological flow from 2011 -> 2025
+    return [...edu, ...exp].sort((a, b) => a.sortYear - b.sortYear);
+  }, [educationData, experienceData]);
 
   // --- Helper to build contact links list dynamically ---
   const getContactLinks = () => {
@@ -388,7 +422,6 @@ const App = () => {
       </div>
 
       {/* --- Floating Pill Navigation (Visible on Home Only) --- */}
-      {/* We keep the nav structure but only show section links if on Home view */}
       <nav className="fixed top-4 md:top-6 left-0 right-0 z-50 flex justify-center px-4">
         <div className={`
           rounded-full px-2 py-2 flex items-center border ${themeClasses.navBorder}
@@ -409,7 +442,7 @@ const App = () => {
           
           <div className="hidden md:flex items-center gap-1">
             {currentView === 'home' ? (
-                // Home Navigation Links - UPDATED: Added 'Blogs'
+                // Home Navigation Links
                 ['Home', 'About', 'Skills', 'Education', 'Experience', 'Projects', 'Blogs', 'Achievements', 'Research'].map((item) => (
                 <button
                     key={item}
@@ -420,14 +453,14 @@ const App = () => {
                 </button>
                 ))
             ) : (
-                // Navigation when inside Blog Pages
+                // Navigation when inside Sub Pages
                 <div className="flex items-center gap-1">
                     <button onClick={handleBackToHome} className={`px-4 py-2 rounded-full text-xs lg:text-sm font-medium ${themeClasses.textMuted} hover:${themeClasses.text}`}>
                         Home
                     </button>
                     <span className={themeClasses.textMuted}>/</span>
                     <span className={`px-4 py-2 text-xs lg:text-sm font-medium ${themeClasses.text}`}>
-                        {currentView === 'all-blogs' ? 'All Blogs' : 'Reading'}
+                        {currentView === 'all-blogs' ? 'All Blogs' : currentView === 'journey' ? 'Journey' : 'Reading'}
                     </span>
                 </div>
             )}
@@ -478,7 +511,6 @@ const App = () => {
       {/* Mobile Menu Overlay */}
       <div className={`fixed inset-0 ${themeClasses.bg} z-40 pt-28 px-6 md:hidden transition-all duration-500 transform ${isMenuOpen ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-full pointer-events-none'}`}>
         <div className="flex flex-col gap-6 text-center h-full overflow-y-auto pb-10">
-          {/* UPDATED: Added 'Blogs' to Mobile Menu */}
           {['Home', 'About', 'Skills', 'Education', 'Projects', 'Blogs', 'Achievements', 'Experience', 'Research', 'Contact'].map((item) => (
             <button 
               key={item}
@@ -530,8 +562,9 @@ const App = () => {
                         </p>
                     </div>
                     <div className="md:col-span-2 flex flex-col sm:flex-row justify-start md:justify-end gap-4">
-                    <button onClick={() => scrollToSection('projects')} className={`${isDark ? 'bg-white text-zinc-900 hover:bg-zinc-200' : 'bg-zinc-900 text-white hover:bg-zinc-800'} px-8 py-4 rounded-full font-medium transition-colors flex items-center justify-center gap-2 w-full sm:w-auto shadow-lg`}>
-                        View Work <ArrowUpRight size={18} />
+                    {/* UPDATED: Changed 'View Work' to 'Journey' */}
+                    <button onClick={handleViewJourney} className={`${isDark ? 'bg-white text-zinc-900 hover:bg-zinc-200' : 'bg-zinc-900 text-white hover:bg-zinc-800'} px-8 py-4 rounded-full font-medium transition-colors flex items-center justify-center gap-2 w-full sm:w-auto shadow-lg`}>
+                        Journey <MapPin size={18} />
                     </button>
                     <button onClick={() => scrollToSection('contact')} className={`bg-transparent border ${isDark ? 'border-zinc-700 text-white hover:bg-zinc-900' : 'border-zinc-300 text-zinc-900 hover:bg-zinc-100'} px-8 py-4 rounded-full font-medium transition-colors w-full sm:w-auto`}>
                         Get in Touch
@@ -733,7 +766,7 @@ const App = () => {
                 </div>
             </section>
 
-            {/* ---------------- NEW BLOG SECTION ---------------- */}
+            {/* ---------------- BLOG SECTION ---------------- */}
             <section id="blogs" className={`py-16 md:py-32 px-6 ${themeClasses.sectionBg} relative z-10 border-b ${themeClasses.border}`}>
                 <div className="container mx-auto max-w-6xl">
                     <RevealOnScroll>
@@ -1066,6 +1099,81 @@ const App = () => {
                     </button>
                 </div>
             </div>
+        </section>
+      )}
+
+      {/* 4. NEW JOURNEY VIEW */}
+      {currentView === 'journey' && (
+        <section className={`min-h-screen pt-32 pb-20 px-4 md:px-6 ${themeClasses.sectionBg} relative z-10`}>
+             <div className="container mx-auto max-w-4xl">
+                 {/* Header */}
+                 <div className="mb-16 text-center">
+                    <button 
+                        onClick={handleBackToHome}
+                        className={`mb-6 inline-flex items-center gap-2 text-sm font-mono ${themeClasses.textMuted} hover:${themeClasses.text} transition-colors border ${themeClasses.border} px-4 py-2 rounded-full`}
+                    >
+                        <ArrowLeft size={16} /> Back to Home
+                    </button>
+                    <h1 className={`text-4xl md:text-6xl font-serif ${themeClasses.text} mb-4`}>My Journey</h1>
+                    <p className={`${themeClasses.textMuted} text-lg font-mono`}>Timeline of Education & Experience</p>
+                </div>
+
+                {/* Timeline */}
+                <div className="relative">
+                    {/* Center Line */}
+                    <div className={`absolute left-1/2 top-0 bottom-16 w-px -translate-x-1/2 ${isDark ? 'bg-zinc-800' : 'bg-zinc-300'}`}></div>
+
+                    <div className="space-y-24 relative pb-32">
+                        {journeyTimeline.map((item, index) => {
+                            const isEven = index % 2 === 0;
+                            return (
+                                <div key={item.id} className={`flex items-center justify-between w-full relative ${isEven ? 'flex-row' : 'flex-row-reverse'}`}>
+                                    {/* Content Side */}
+                                    <div className={`w-[42%] ${isEven ? 'text-right pr-8' : 'text-left pl-8'}`}>
+                                        <div className={`font-mono text-sm ${themeClasses.textSubtle} mb-1 uppercase tracking-wider`}>
+                                            {item.year_range}
+                                        </div>
+                                        <h3 className={`text-xl md:text-2xl font-serif ${themeClasses.text} mb-1`}>
+                                            {item.title}
+                                        </h3>
+                                        <div className={`text-base font-medium ${isDark ? 'text-zinc-400' : 'text-zinc-600'} mb-3`}>
+                                            {item.subtitle}
+                                        </div>
+                                        <p className={`text-sm ${themeClasses.textMuted} leading-relaxed hidden md:block`}>
+                                            {item.description}
+                                        </p>
+                                    </div>
+
+                                    {/* Center Node (Logo) */}
+                                    <div className="absolute left-1/2 -translate-x-1/2 flex items-center justify-center">
+                                        <div className={`w-16 h-16 md:w-24 md:h-24 rounded-full border-4 ${isDark ? 'border-zinc-950 bg-zinc-900' : 'border-stone-50 bg-white'} shadow-xl overflow-hidden flex items-center justify-center relative z-10 transition-transform hover:scale-110 duration-300 group`}>
+                                             {item.image_url ? (
+                                                 <img src={item.image_url} alt={item.subtitle} className="w-full h-full object-contain p-2" />
+                                             ) : (
+                                                 <div className={themeClasses.textSubtle}>
+                                                     {item.type === 'education' ? <GraduationCap size={24}/> : <Briefcase size={24}/>}
+                                                 </div>
+                                             )}
+                                             
+                                             {/* Hover tooltip for small devices if needed */}
+                                        </div>
+                                    </div>
+
+                                    {/* Empty Side for layout balance */}
+                                    <div className="w-[42%]"></div>
+                                </div>
+                            );
+                        })}
+
+                        {/* End Circle "More to come!" */}
+                        <div className="flex flex-col items-center justify-center relative pt-8">
+                             <div className={`w-24 h-24 rounded-full ${isDark ? 'bg-zinc-800 text-zinc-400' : 'bg-zinc-200 text-zinc-600'} flex items-center justify-center text-center font-mono text-xs p-4 shadow-inner relative z-10`}>
+                                 MORE<br/>TO<br/>COME!
+                             </div>
+                        </div>
+                    </div>
+                </div>
+             </div>
         </section>
       )}
       
