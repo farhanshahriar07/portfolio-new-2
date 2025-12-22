@@ -562,12 +562,10 @@ const App = () => {
                     </div>
                     <div className="relative">
                         <div 
-                            className={`aspect-[3/4] ${themeClasses.cardBg} rounded-sm overflow-hidden border ${themeClasses.border} relative`}
+                            className={`aspect-square max-w-md mx-auto ${themeClasses.cardBg} rounded-full overflow-hidden border ${themeClasses.border} relative shadow-2xl`}
                             style={{ transform: `translateY(${scrollY * -0.05}px)` }} 
                         >
-                            <div className={`absolute inset-4 border ${isDark ? 'border-zinc-700/50' : 'border-zinc-300/50'}`}></div>
-                            <div className={`absolute top-2 right-2 w-2 h-2 border-t border-r ${themeClasses.text}`}></div>
-                            <div className={`absolute bottom-2 left-2 w-2 h-2 border-b border-l ${themeClasses.text}`}></div>
+                            <div className={`absolute inset-4 border ${isDark ? 'border-zinc-700/50' : 'border-zinc-300/50'} rounded-full`}></div>
                             
                             {aboutData?.profile_image ? (
                                 <img src={aboutData.profile_image} alt="Profile" className="w-full h-full object-cover grayscale opacity-80 hover:opacity-100 hover:grayscale-0 duration-300 transition-opacity" />
@@ -763,7 +761,7 @@ const App = () => {
                                         <div className="aspect-[16/9] w-full overflow-hidden border-b border-zinc-800">
                                             {/* UPDATED: Image Fallback */}
                                             <img 
-                                                src={blog.image_url || blog.cover_image || PLACEHOLDER_BLOG_IMG} 
+                                                src={blog.image_url || blog.image || PLACEHOLDER_BLOG_IMG} 
                                                 alt={blog.title} 
                                                 onError={(e) => e.target.src = PLACEHOLDER_BLOG_IMG}
                                                 className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-500 transform group-hover:scale-105"
@@ -981,7 +979,7 @@ const App = () => {
                             <div className="aspect-[16/9] w-full overflow-hidden border-b border-zinc-800">
                                 {/* UPDATED: Image Fallback */}
                                 <img 
-                                    src={blog.image_url || blog.cover_image || PLACEHOLDER_BLOG_IMG} 
+                                    src={blog.image_url || blog.image || PLACEHOLDER_BLOG_IMG} 
                                     alt={blog.title} 
                                     onError={(e) => e.target.src = PLACEHOLDER_BLOG_IMG}
                                     className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-500 transform group-hover:scale-105"
