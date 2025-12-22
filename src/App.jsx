@@ -815,12 +815,12 @@ const App = () => {
       {/* Scroll to Top Button */}
       <button
         onClick={scrollToTop}
-        className={`fixed bottom-8 right-8 p-3 rounded-full shadow-lg transition-all duration-300 z-50 ${
+        className={`fixed bottom-8 right-8 px-5 py-3 rounded-full shadow-lg transition-all duration-300 z-50 flex items-center gap-2 font-medium text-sm uppercase tracking-wide ${
           scrollY > 500 ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10 pointer-events-none'
         } ${isDark ? 'bg-white text-zinc-900 hover:bg-zinc-200' : 'bg-zinc-900 text-white hover:bg-zinc-800'}`}
         aria-label="Scroll to top"
       >
-        <ArrowUp size={24} />
+        Top <ArrowUp size={16} />
       </button>
     </div>
   );
