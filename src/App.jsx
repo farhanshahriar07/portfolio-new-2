@@ -4,13 +4,14 @@ import {
   Settings, Ruler, GitCommit,
   Moon, Sun, GraduationCap, Facebook, Instagram, Twitter, 
   MessageCircle, Globe, Briefcase, Building2, ArrowUp, Award,
-  Clock, BookOpen, FileText, Send
+  Clock, BookOpen, FileText, Send, ArrowLeft, PenTool, Calendar
 } from 'lucide-react';
 
 // --- Configuration ---
 // Ensure this matches your Flask local address
 const API_BASE_URL = 'https://adnan-backend-eyxe.onrender.com/api'; 
 // const API_BASE_URL = 'http://127.0.0.1:5000/api'; // Local Flask API
+const PLACEHOLDER_BLOG_IMG = "https://images.unsplash.com/photo-1488590528505-98d2b5aba04b?auto=format&fit=crop&q=80&w=800";
 
 // --- Styles & Fonts ---
 const styles = `
@@ -63,6 +64,11 @@ const styles = `
     background-image: linear-gradient(to right, rgba(0, 0, 0, 0.03) 1px, transparent 1px),
                       linear-gradient(to bottom, rgba(0, 0, 0, 0.03) 1px, transparent 1px);
   }
+
+  /* Typography for Blog Content */
+  .prose p { margin-bottom: 1.5em; line-height: 1.8; }
+  .prose h3 { font-family: 'Playfair Display', serif; font-size: 1.5em; margin-top: 2em; margin-bottom: 1em; }
+  .prose ul { list-style-type: disc; padding-left: 1.5em; margin-bottom: 1.5em; }
 `;
 
 // --- Components ---
@@ -122,6 +128,10 @@ const App = () => {
   const [scrollY, setScrollY] = useState(0);
   const [theme, setTheme] = useState('dark');
   
+  // View State for Blog System
+  const [currentView, setCurrentView] = useState('home'); // 'home', 'all-blogs', 'single-blog'
+  const [selectedBlog, setSelectedBlog] = useState(null);
+
   // Create a ref for the main scrollable container
   const mainScrollRef = useRef(null);
   
@@ -134,6 +144,7 @@ const App = () => {
   const [experienceData, setExperienceData] = useState([]);
   const [researchData, setResearchData] = useState([]);
   const [achievementsData, setAchievementsData] = useState([]);
+  const [blogsData, setBlogsData] = useState([]); // New Blog State
   
   // Contact Form State
   const [contactForm, setContactForm] = useState({ name: '', email: '', subject: '', message: '' });
@@ -156,14 +167,15 @@ const App = () => {
   useEffect(() => {
     const fetchAllData = async () => {
       try {
-        const [aboutRes, skillsRes, eduRes, projectsRes, expRes, researchRes, achievementsRes] = await Promise.all([
+        const [aboutRes, skillsRes, eduRes, projectsRes, expRes, researchRes, achievementsRes, blogsRes] = await Promise.all([
           fetch(`${API_BASE_URL}/about`),
           fetch(`${API_BASE_URL}/skills`),
           fetch(`${API_BASE_URL}/education`),
           fetch(`${API_BASE_URL}/projects`),
           fetch(`${API_BASE_URL}/experience`),
           fetch(`${API_BASE_URL}/research`),
-          fetch(`${API_BASE_URL}/achievements`)
+          fetch(`${API_BASE_URL}/achievements`),
+          fetch(`${API_BASE_URL}/blogs`) // Added Fetch for Blogs
         ]);
 
         if (aboutRes.ok) setAboutData(await aboutRes.json());
@@ -173,6 +185,7 @@ const App = () => {
         if (expRes.ok) setExperienceData(await expRes.json());
         if (researchRes.ok) setResearchData(await researchRes.json());
         if (achievementsRes.ok) setAchievementsData(await achievementsRes.json());
+        if (blogsRes.ok) setBlogsData(await blogsRes.json());
       } catch (error) {
         console.error("Failed to fetch data:", error);
       } finally {
@@ -183,7 +196,7 @@ const App = () => {
     fetchAllData();
   }, []);
 
-  // --- Scroll Listener (Attached to main container now) ---
+  // --- Scroll Listener ---
   useEffect(() => {
     const handleScroll = () => {
       if (!mainScrollRef.current) return;
@@ -191,13 +204,16 @@ const App = () => {
       const currentScrollY = mainScrollRef.current.scrollTop;
       setScrollY(currentScrollY);
       
-      const sections = ['home', 'about', 'skills', 'education', 'experience', 'projects', 'achievements', 'research', 'contact'];
-      for (const section of sections) {
-        const element = document.getElementById(section);
-        if (element) {
-          const rect = element.getBoundingClientRect();
-          if (rect.top <= 200 && rect.bottom >= 200) {
-            setActiveSection(section);
+      // Only track sections if we are in 'home' view
+      if (currentView === 'home') {
+        const sections = ['home', 'about', 'skills', 'education', 'experience', 'projects', 'blogs', 'achievements', 'research', 'contact'];
+        for (const section of sections) {
+          const element = document.getElementById(section);
+          if (element) {
+            const rect = element.getBoundingClientRect();
+            if (rect.top <= 200 && rect.bottom >= 200) {
+              setActiveSection(section);
+            }
           }
         }
       }
@@ -213,14 +229,48 @@ const App = () => {
             scrollContainer.removeEventListener('scroll', handleScroll);
         }
     };
-  }, [loading]);
+  }, [loading, currentView]);
 
   const scrollToSection = (id) => {
-    setIsMenuOpen(false);
-    const element = document.getElementById(id);
-    if (element) {
-        element.scrollIntoView({ behavior: 'smooth' });
+    // If not on home view, go home first then scroll
+    if (currentView !== 'home') {
+        setCurrentView('home');
+        // Give React a moment to render Home before scrolling
+        setTimeout(() => {
+            const element = document.getElementById(id);
+            if (element) element.scrollIntoView({ behavior: 'smooth' });
+        }, 100);
+    } else {
+        const element = document.getElementById(id);
+        if (element) element.scrollIntoView({ behavior: 'smooth' });
     }
+    setIsMenuOpen(false);
+  };
+
+  // --- Blog Navigation Helpers ---
+  const handleViewAllBlogs = () => {
+    setCurrentView('all-blogs');
+    scrollToTop();
+  };
+
+  const handleReadBlog = (blog) => {
+    setSelectedBlog(blog);
+    setCurrentView('single-blog');
+    scrollToTop();
+  };
+
+  const handleBackToHome = () => {
+    setCurrentView('home');
+    setTimeout(() => {
+        // Optional: scroll back to blogs section
+        const element = document.getElementById('blogs');
+        if (element) element.scrollIntoView();
+    }, 100);
+  };
+
+  const handleBackToAllBlogs = () => {
+    setCurrentView('all-blogs');
+    scrollToTop();
   };
 
   const handleContactChange = (e) => {
@@ -324,7 +374,7 @@ const App = () => {
         <Settings size={400} strokeWidth={0.5} />
       </div>
 
-      {/* --- Fixed Top Left Profile Image (New) --- */}
+      {/* --- Fixed Top Left Profile Image --- */}
       <div className="fixed top-7 left-7 z-50 hidden md:block">
          <div className={`w-12 h-12 rounded-full overflow-hidden border-2 ${themeClasses.border} shadow-xl transition-transform hover:scale-105 duration-300`}>
             {aboutData?.mini_profile_image ? (
@@ -337,7 +387,8 @@ const App = () => {
          </div>
       </div>
 
-      {/* --- Floating Pill Navigation --- */}
+      {/* --- Floating Pill Navigation (Visible on Home Only) --- */}
+      {/* We keep the nav structure but only show section links if on Home view */}
       <nav className="fixed top-4 md:top-6 left-0 right-0 z-50 flex justify-center px-4">
         <div className={`
           rounded-full px-2 py-2 flex items-center border ${themeClasses.navBorder}
@@ -347,7 +398,6 @@ const App = () => {
             : `${isDark ? 'bg-zinc-950/80' : 'bg-stone-50/80'} backdrop-blur-sm shadow-xl`}
         `}>
           <div className={`pl-4 md:pl-2 pr-4 md:pr-8 font-serif font-bold text-lg md:text-xl tracking-tighter cursor-pointer flex items-center gap-3 ${themeClasses.text}`} onClick={() => scrollToSection('home')}>
-             {/* Updated: Replaced Image with Gear Icon that ROTATES on scroll */}
              <div className="p-2 rounded-full overflow-hidden border border-zinc-500/20 relative flex-shrink-0 flex items-center justify-center">
                 <Settings 
                     size={20} 
@@ -355,26 +405,41 @@ const App = () => {
                     style={{ transform: `rotate(${scrollY * 0.4}deg)` }}
                 />
             </div>
-            {/* <span>M.E.</span> */}
           </div>
           
           <div className="hidden md:flex items-center gap-1">
-            {['Home', 'About', 'Skills', 'Education', 'Experience', 'Projects', 'Achievements', 'Research'].map((item) => (
-              <button
-                key={item}
-                onClick={() => scrollToSection(item.toLowerCase())}
-                className={`px-4 py-2 rounded-full text-xs lg:text-sm font-medium transition-all duration-300 ${activeSection === item.toLowerCase() ? `${isDark ? 'bg-white text-zinc-900' : 'bg-zinc-900 text-white'} shadow-sm` : `${themeClasses.textMuted} hover:${themeClasses.text}`}`}
-              >
-                {item}
-              </button>
-            ))}
+            {currentView === 'home' ? (
+                // Home Navigation Links - UPDATED: Added 'Blogs'
+                ['Home', 'About', 'Skills', 'Education', 'Experience', 'Projects', 'Blogs', 'Achievements', 'Research'].map((item) => (
+                <button
+                    key={item}
+                    onClick={() => scrollToSection(item.toLowerCase())}
+                    className={`px-4 py-2 rounded-full text-xs lg:text-sm font-medium transition-all duration-300 ${activeSection === item.toLowerCase() ? `${isDark ? 'bg-white text-zinc-900' : 'bg-zinc-900 text-white'} shadow-sm` : `${themeClasses.textMuted} hover:${themeClasses.text}`}`}
+                >
+                    {item}
+                </button>
+                ))
+            ) : (
+                // Navigation when inside Blog Pages
+                <div className="flex items-center gap-1">
+                    <button onClick={handleBackToHome} className={`px-4 py-2 rounded-full text-xs lg:text-sm font-medium ${themeClasses.textMuted} hover:${themeClasses.text}`}>
+                        Home
+                    </button>
+                    <span className={themeClasses.textMuted}>/</span>
+                    <span className={`px-4 py-2 text-xs lg:text-sm font-medium ${themeClasses.text}`}>
+                        {currentView === 'all-blogs' ? 'All Blogs' : 'Reading'}
+                    </span>
+                </div>
+            )}
             
-            <button 
-               onClick={() => scrollToSection('contact')}
-               className={`ml-2 px-4 py-2 rounded-full text-xs lg:text-sm font-medium border ${activeSection === 'contact' ? `${isDark ? 'bg-white text-zinc-900' : 'bg-zinc-900 text-white'} ${themeClasses.border} shadow-sm` : `${themeClasses.border} ${themeClasses.textMuted} hover:${themeClasses.text}`}`}
-            >
-              Contact
-            </button>
+            {currentView === 'home' && (
+                <button 
+                onClick={() => scrollToSection('contact')}
+                className={`ml-2 px-4 py-2 rounded-full text-xs lg:text-sm font-medium border ${activeSection === 'contact' ? `${isDark ? 'bg-white text-zinc-900' : 'bg-zinc-900 text-white'} ${themeClasses.border} shadow-sm` : `${themeClasses.border} ${themeClasses.textMuted} hover:${themeClasses.text}`}`}
+                >
+                Contact
+                </button>
+            )}
 
             {/* Dynamic Resume Link */}
             {aboutData?.resume_link && (
@@ -413,7 +478,8 @@ const App = () => {
       {/* Mobile Menu Overlay */}
       <div className={`fixed inset-0 ${themeClasses.bg} z-40 pt-28 px-6 md:hidden transition-all duration-500 transform ${isMenuOpen ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-full pointer-events-none'}`}>
         <div className="flex flex-col gap-6 text-center h-full overflow-y-auto pb-10">
-          {['Home', 'About', 'Skills', 'Education', 'Projects', 'Achievements', 'Experience', 'Research', 'Contact'].map((item) => (
+          {/* UPDATED: Added 'Blogs' to Mobile Menu */}
+          {['Home', 'About', 'Skills', 'Education', 'Projects', 'Blogs', 'Achievements', 'Experience', 'Research', 'Contact'].map((item) => (
             <button 
               key={item}
               onClick={() => scrollToSection(item.toLowerCase())}
@@ -432,385 +498,578 @@ const App = () => {
         </div>
       </div>
 
-      {/* === MAIN PORTFOLIO === */}
-      
-      {/* Hero Section */}
-      <section id="home" className="min-h-screen pt-32 md:pt-40 pb-20 px-6 flex flex-col justify-between relative z-10">
-        <div className="container mx-auto max-w-6xl">
-          <RevealOnScroll>
-            <div className="flex items-center gap-4 mb-6 opacity-60">
-                <Ruler size={16} className={themeClasses.textMuted} />
-                <span className={`font-mono text-xs uppercase tracking-[0.2em] ${themeClasses.textMuted}`}>System.Architecture.Design</span>
-                <div className={`h-px w-24 ${isDark ? 'bg-zinc-700' : 'bg-zinc-300'}`}></div>
-            </div>
-            <h1 className={`text-4xl sm:text-6xl md:text-8xl lg:text-9xl font-serif font-medium leading-[1.1] md:leading-[0.9] tracking-tight mb-8 ${themeClasses.text} relative`}>
-              {aboutData?.name ? aboutData.name.split(' ')[0] : 'Design'} <br/>
-              <span className={`italic ${themeClasses.textSubtle} ml-0 md:ml-24 relative z-10`}>
-                {aboutData?.name ? aboutData.name.split(' ').slice(1).join(' ') : 'Precision.'}
-              </span>
-              <div className={`absolute bottom-2 left-0 md:left-24 w-32 h-1 ${isDark ? 'bg-zinc-800' : 'bg-zinc-300'} -z-10 skew-x-12`}></div>
-            </h1>
-          </RevealOnScroll>
-          
-          <div className="grid md:grid-cols-3 gap-8 md:gap-12 items-end mt-12">
-            <div className={`md:col-span-1 border-l ${themeClasses.border} pl-6`}>
-                <p className={`text-base md:text-lg ${themeClasses.textMuted} leading-relaxed font-normal`}> 
-                  {aboutData?.short_bio || "Mechanical Engineer focused on bridging the gap between rigorous analysis and functional aesthetics."}
-                </p>
-            </div>
-            <div className="md:col-span-2 flex flex-col sm:flex-row justify-start md:justify-end gap-4">
-              <button onClick={() => scrollToSection('projects')} className={`${isDark ? 'bg-white text-zinc-900 hover:bg-zinc-200' : 'bg-zinc-900 text-white hover:bg-zinc-800'} px-8 py-4 rounded-full font-medium transition-colors flex items-center justify-center gap-2 w-full sm:w-auto shadow-lg`}>
-                View Work <ArrowUpRight size={18} />
-              </button>
-              <button onClick={() => scrollToSection('contact')} className={`bg-transparent border ${isDark ? 'border-zinc-700 text-white hover:bg-zinc-900' : 'border-zinc-300 text-zinc-900 hover:bg-zinc-100'} px-8 py-4 rounded-full font-medium transition-colors w-full sm:w-auto`}>
-                Get in Touch
-              </button>
-            </div>
-          </div>
-        </div>
-      </section>
+      {/* ================================================================================== */}
+      {/* ============================== VIEW CONTROLLER =================================== */}
+      {/* ================================================================================== */}
 
-      {/* Marquee Skills */}
-      <Marquee isDark={isDark} items={skillsData} />
-
-      {/* About Section */}
-      <section id="about" className={`py-16 md:py-32 px-6 ${themeClasses.sectionBg} relative z-10 border-b ${themeClasses.border}`}>
-        <div className="container mx-auto max-w-6xl">
-          <RevealOnScroll>
-            <div className="grid md:grid-cols-2 gap-12 md:gap-20 items-center">
-              <div>
-                <span className={`font-mono text-xs uppercase tracking-widest ${themeClasses.textMuted} mb-4 block flex items-center gap-2`}>
-                    <span className={`w-2 h-2 ${isDark ? 'bg-zinc-500' : 'bg-zinc-400'} rounded-full`}></span> About Me
-                </span>
-                <h2 className={`text-3xl md:text-5xl font-serif mb-8 leading-tight ${themeClasses.text}`}>
-                  Applying <span className={`italic ${themeClasses.textMuted}`}>first principles</span> to solve complex physical problems.
-                </h2>
-                <div className={`space-y-6 text-lg ${themeClasses.textMuted} leading-relaxed font-normal whitespace-pre-wrap mb-10`}> 
-                  {aboutData?.long_bio || "I believe that great engineering is indistinguishable from art. Whether it's optimizing a thermal system or designing a chassis, the goal is always elegance in efficiency."}
-                </div>
-              </div>
-              <div className="relative">
-                  <div 
-                    className={`aspect-[3/4] ${themeClasses.cardBg} rounded-sm overflow-hidden border ${themeClasses.border} relative`}
-                    style={{ transform: `translateY(${scrollY * -0.05}px)` }} 
-                  >
-                    <div className={`absolute inset-4 border ${isDark ? 'border-zinc-700/50' : 'border-zinc-300/50'}`}></div>
-                    <div className={`absolute top-2 right-2 w-2 h-2 border-t border-r ${themeClasses.text}`}></div>
-                    <div className={`absolute bottom-2 left-2 w-2 h-2 border-b border-l ${themeClasses.text}`}></div>
-                    
-                    {aboutData?.profile_image ? (
-                        <img src={aboutData.profile_image} alt="Profile" className="w-full h-full object-cover grayscale opacity-80 hover:opacity-100 hover:grayscale-0 duration-300 transition-opacity" />
-                    ) : (
-                        <div className={`w-full h-full flex items-center justify-center ${themeClasses.textSubtle} font-mono`}>
-                          IMG_PORTRAIT.RAW
-                        </div>
-                    )}
-                  </div>
-              </div>
-            </div>
-          </RevealOnScroll>
-        </div>
-      </section>
-
-      {/* Skills Section */}
-      <section id="skills" className={`py-16 md:py-32 px-6 ${themeClasses.sectionBg} relative z-10 border-b ${themeClasses.border}`}>
-        <div className="container mx-auto max-w-6xl">
-          <RevealOnScroll>
-            <div className="flex items-center gap-4 mb-12 md:mb-16">
-               <Settings className={themeClasses.textMuted} size={24} />
-               <h2 className={`text-3xl md:text-5xl font-serif ${themeClasses.text}`}>Technical Proficiency</h2>
-            </div>
-
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
-               {skillsData.length > 0 ? skillsData.map((skill, index) => (
-                    <div key={skill.id || index} className={`p-4 md:p-6 border ${themeClasses.border} rounded-sm flex flex-col items-center justify-center gap-4 group hover:bg-zinc-500/5 transition-colors`}>
-                        {/* UPDATED: Directly using image_url from API */}
-                        <img 
-                            src={skill.image_url} 
-                            alt={skill.name} 
-                            className={`w-12 h-12 object-contain transition-transform group-hover:scale-110 ${isDark ? 'dark-icon-glow' : ''}`} 
-                        />
-                        
-                        <span className={`font-mono text-xs md:text-sm uppercase tracking-wide text-center ${themeClasses.text}`}>
-                          {skill.name}
-                        </span>
+      {/* 1. HOME VIEW */}
+      {currentView === 'home' && (
+        <>
+            {/* Hero Section */}
+            <section id="home" className="min-h-screen pt-32 md:pt-40 pb-20 px-6 flex flex-col justify-between relative z-10">
+                <div className="container mx-auto max-w-6xl">
+                <RevealOnScroll>
+                    <div className="flex items-center gap-4 mb-6 opacity-60">
+                        <Ruler size={16} className={themeClasses.textMuted} />
+                        <span className={`font-mono text-xs uppercase tracking-[0.2em] ${themeClasses.textMuted}`}>System.Architecture.Design</span>
+                        <div className={`h-px w-24 ${isDark ? 'bg-zinc-700' : 'bg-zinc-300'}`}></div>
                     </div>
-                  )) : (
-                  <div className={`col-span-full text-center py-10 ${themeClasses.textMuted}`}>No skills loaded.</div>
-               )}
-            </div>
-          </RevealOnScroll>
-        </div>
-      </section>
-
-      {/* Education Section */}
-      <section id="education" className={`py-16 md:py-32 px-6 ${themeClasses.sectionBg} relative z-10 border-b ${themeClasses.border}`}>
-        <div className="container mx-auto max-w-6xl">
-          <RevealOnScroll>
-            <div className="flex items-center gap-4 mb-12 md:mb-16">
-               <GraduationCap className={themeClasses.textMuted} size={24} />
-               <h2 className={`text-3xl md:text-5xl font-serif ${themeClasses.text}`}>Education</h2>
-            </div>
-
-            <div className={`relative border-l ${themeClasses.border} ml-3 md:ml-0 space-y-12 md:space-y-16`}>
-              {educationData.length > 0 ? educationData.map((edu) => (
-                <div key={edu.id} className="relative pl-8 md:pl-12 group">
-                  <div className={`absolute -left-[5px] top-2 w-[9px] h-[9px] ${themeClasses.bg} border ${isDark ? 'border-zinc-500' : 'border-zinc-400'} rounded-full group-hover:${isDark ? 'bg-white' : 'bg-zinc-900'} transition-colors`}></div>
-                  
-                  <div className="grid md:grid-cols-4 gap-4 items-start">
-                      <div className={`md:col-span-1 flex justify-start`}>
-                          <div className={`w-32 h-32 md:w-32 md:h-32 rounded-xl border ${themeClasses.border} ${isDark ? 'bg-zinc-800/50' : 'bg-white'} flex items-center justify-center dark-logo-glow overflow-hidden shrink-0`}>
-                             {edu.logo_url ? (
-                                <img src={edu.logo_url} alt={edu.institution} className="w-full h-full object-contain" />
-                             ) : (
-                                <Building2 size={24} className={`md:w-8 md:h-8 ${themeClasses.textSubtle}`} />
-                             )}
-                          </div>
-                      </div>
-                      
-                      <div className="md:col-span-3">
-                        <h4 className={`text-xl md:text-2xl font-medium ${themeClasses.text} group-hover:${themeClasses.textMuted} transition-colors`}>{edu.degree}</h4>
-                        
-                        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-baseline mb-2 gap-1">
-                            <div className={`${themeClasses.textSubtle} font-serif italic`}>{edu.institution}</div>
-                            <span className={`font-mono text-sm ${themeClasses.textMuted} whitespace-nowrap`}>{edu.year_range}</span>
-                        </div>
-                        
-                        <p className={`${themeClasses.textMuted} text-sm max-w-lg whitespace-pre-line`}>{edu.description}</p>
-                      </div>
-                  </div>
-                </div>
-              )) : (
-                <p className={`pl-8 ${themeClasses.textMuted}`}>Loading education history...</p>
-              )}
-            </div>
-          </RevealOnScroll>
-        </div>
-      </section>
-
-      {/* Experience Section */}
-      <section id="experience" className={`py-16 md:py-32 px-6 ${themeClasses.sectionBg} relative z-10 border-b ${themeClasses.border}`}>
-        <div className="container mx-auto max-w-6xl">
-          <RevealOnScroll>
-            <div className="flex items-center gap-4 mb-12 md:mb-16">
-                <Clock className={themeClasses.textMuted} size={24} />
-                <h2 className={`text-3xl md:text-5xl font-serif ${themeClasses.text}`}>Professional History</h2>
-            </div>
-
-            <div className={`relative border-l ${themeClasses.border} ml-3 md:ml-0 space-y-12 md:space-y-16`}>
-              {experienceData.length > 0 ? experienceData.map((job) => (
-                <div key={job.id} className="relative pl-8 md:pl-12 group">
-                  <div className={`absolute -left-[5px] top-2 w-[9px] h-[9px] ${themeClasses.bg} border ${isDark ? 'border-zinc-500' : 'border-zinc-400'} rounded-full group-hover:${isDark ? 'bg-white' : 'bg-zinc-900'} transition-colors`}></div>
-                  
-                  <div className="grid md:grid-cols-4 gap-4 items-baseline">
-                      <span className={`font-mono text-sm ${themeClasses.textMuted} md:col-span-1`}>{job.year_range}</span>
-                      <div className="md:col-span-3">
-                        <h4 className={`text-xl md:text-2xl font-medium ${themeClasses.text} group-hover:${themeClasses.textMuted} transition-colors`}>{job.role}</h4>
-                        <div className={`${themeClasses.textSubtle} font-serif italic mb-2`}>{job.company}</div>
-                        <p className={`${themeClasses.textMuted} text-sm max-w-lg whitespace-pre-line`}>{job.description}</p>
-                      </div>
-                  </div>
-                </div>
-              )) : (
-                <p className={`pl-8 ${themeClasses.textMuted}`}>Loading experience...</p>
-              )}
-            </div>
-          </RevealOnScroll>
-        </div>
-      </section>
-
-      {/* Projects - Masonry Grid */}
-      <section id="projects" className={`py-16 md:py-32 px-6 ${themeClasses.sectionBg} relative z-10 border-b ${themeClasses.border}`}>
-        <div className="container mx-auto max-w-6xl">
-          <RevealOnScroll>
-            {/* Standardized Header */}
-            <div className="flex items-center gap-4 mb-12 md:mb-16">
-               <Briefcase className={themeClasses.textMuted} size={24} />
-               <h2 className={`text-3xl md:text-5xl font-serif ${themeClasses.text}`}>Portfolio</h2>
-            </div>
-
-            <div className="grid md:grid-cols-2 gap-8 md:gap-x-16">
-              {projectsData.length > 0 ? projectsData.map((project, index) => (
-                <RevealOnScroll key={project.id} className={index % 2 !== 0 ? "md:pt-32" : ""}>
-                  <div className="group cursor-pointer mb-12 md:mb-0">
-                    <div className={`aspect-[4/3] ${isDark ? 'bg-zinc-900' : 'bg-zinc-100'} rounded-sm overflow-hidden mb-6 relative transition-all duration-500 group-hover:opacity-99 border ${themeClasses.border}`}>
-                      <div className={`absolute top-4 right-4 font-mono text-[10px] ${themeClasses.textMuted} bg-black/10 px-2 py-1 backdrop-blur-sm rounded`}>PRJ-{project.id}</div>
-                      
-                      {project.image_url ? (
-                          <img src={project.image_url} alt={project.title} className="w-full h-full grayscale hover:grayscale-0 duration-300 transition-opacity object-cover" />
-                      ) : (
-                          <div className={`absolute inset-0 flex items-center justify-center font-serif text-2xl italic opacity-60 ${isDark ? 'text-zinc-600' : 'text-zinc-400'}`}>
-                            {project.category}
-                          </div>
-                      )}
-                      
-                      <div className="absolute inset-0 border border-white/10 m-4 pointer-events-none"></div>
-                    </div>
-                    <div className={`flex justify-between items-start border-t ${themeClasses.border} pt-4`}>
-                      <div>
-                        <h3 className={`text-2xl md:text-3xl font-serif mb-2 ${themeClasses.text} group-hover:${themeClasses.textMuted} transition-colors`}>{project.title}</h3>
-                        <p className={`${themeClasses.textMuted} max-w-sm text-sm md:text-base font-mono whitespace-pre-line`}>{project.category}</p>
-                      </div>
-                      {project.project_link && (
-                          <a href={project.project_link} target="_blank" rel="noopener noreferrer">
-                              <ArrowUpRight className={`opacity-0 group-hover:opacity-100 transition-opacity ${themeClasses.text}`} />
-                          </a>
-                      )}
-                    </div>
-                  </div>
+                    <h1 className={`text-4xl sm:text-6xl md:text-8xl lg:text-9xl font-serif font-medium leading-[1.1] md:leading-[0.9] tracking-tight mb-8 ${themeClasses.text} relative`}>
+                    {aboutData?.name ? aboutData.name.split(' ')[0] : 'Design'} <br/>
+                    <span className={`italic ${themeClasses.textSubtle} ml-0 md:ml-24 relative z-10`}>
+                        {aboutData?.name ? aboutData.name.split(' ').slice(1).join(' ') : 'Precision.'}
+                    </span>
+                    <div className={`absolute bottom-2 left-0 md:left-24 w-32 h-1 ${isDark ? 'bg-zinc-800' : 'bg-zinc-300'} -z-10 skew-x-12`}></div>
+                    </h1>
                 </RevealOnScroll>
-              )) : (
-                  <div className={`col-span-2 text-center py-20 ${themeClasses.textMuted}`}>No projects loaded.</div>
-              )}
-            </div>
-          </RevealOnScroll>
-        </div>
-      </section>
-
-      {/* Achievements Section */}
-      <section id="achievements" className={`py-16 md:py-32 px-6 ${themeClasses.sectionBg} relative z-10 border-b ${themeClasses.border}`}>
-        <div className="container mx-auto max-w-6xl">
-          <RevealOnScroll>
-            <div className="flex items-center gap-4 mb-12 md:mb-16">
-                <Award className={themeClasses.textMuted} size={24} />
-                <h2 className={`text-3xl md:text-5xl font-serif ${themeClasses.text}`}>Achievements</h2>
-            </div>
-
-            <div className="grid md:grid-cols-2 gap-8">
-              {achievementsData.length > 0 ? achievementsData.map((achievement) => (
-                <div key={achievement.id} className={`group ${themeClasses.cardBg} p-6 md:p-8 rounded-sm border ${themeClasses.border} hover:${isDark ? 'border-zinc-600' : 'border-zinc-400'} transition-all hover:-translate-y-1 relative`}>
-                   <div className="flex justify-between items-start mb-4">
-                      <h4 className={`text-lg md:text-xl font-serif ${themeClasses.text} group-hover:${themeClasses.textMuted} transition-colors`}>{achievement.title}</h4>
-                      {(achievement.year || achievement.date) && (
-                        <span className={`font-mono text-xs ${themeClasses.textMuted} border ${themeClasses.border} px-2 py-1 rounded-full shrink-0 ml-2`}>{achievement.year || achievement.date}</span>
-                      )}
-                   </div>
-                   {achievement.organization && (
-                     <p className={`${themeClasses.textSubtle} font-medium mb-2`}>{achievement.organization}</p>
-                   )}
-                   <p className={`${themeClasses.textMuted} text-sm leading-relaxed whitespace-pre-line`}>{achievement.description}</p>
+                
+                <div className="grid md:grid-cols-3 gap-8 md:gap-12 items-end mt-12">
+                    <div className={`md:col-span-1 border-l ${themeClasses.border} pl-6`}>
+                        <p className={`text-base md:text-lg ${themeClasses.textMuted} leading-relaxed font-normal`}> 
+                        {aboutData?.short_bio || "Mechanical Engineer focused on bridging the gap between rigorous analysis and functional aesthetics."}
+                        </p>
+                    </div>
+                    <div className="md:col-span-2 flex flex-col sm:flex-row justify-start md:justify-end gap-4">
+                    <button onClick={() => scrollToSection('projects')} className={`${isDark ? 'bg-white text-zinc-900 hover:bg-zinc-200' : 'bg-zinc-900 text-white hover:bg-zinc-800'} px-8 py-4 rounded-full font-medium transition-colors flex items-center justify-center gap-2 w-full sm:w-auto shadow-lg`}>
+                        View Work <ArrowUpRight size={18} />
+                    </button>
+                    <button onClick={() => scrollToSection('contact')} className={`bg-transparent border ${isDark ? 'border-zinc-700 text-white hover:bg-zinc-900' : 'border-zinc-300 text-zinc-900 hover:bg-zinc-100'} px-8 py-4 rounded-full font-medium transition-colors w-full sm:w-auto`}>
+                        Get in Touch
+                    </button>
+                    </div>
                 </div>
-              )) : (
-                <div className={`col-span-2 text-center py-10 ${themeClasses.textMuted}`}>No achievements loaded.</div>
-              )}
-            </div>
-          </RevealOnScroll>
-        </div>
-      </section>
-
-      {/* Research Section */}
-      <section id="research" className={`py-16 md:py-32 px-6 ${themeClasses.sectionBg} relative z-10 border-b ${themeClasses.border}`}>
-        <div className="container mx-auto max-w-6xl">
-          <RevealOnScroll>
-            <div className="flex items-center gap-4 mb-12 md:mb-16">
-                <BookOpen className={themeClasses.textMuted} size={24} />
-                <div>
-                  <h2 className={`text-3xl md:text-5xl font-serif ${themeClasses.text}`}>Research & Publications</h2>
-                  <span className={`font-mono text-xs ${themeClasses.textMuted}`}>ACADEMIC ARCHIVE</span>
                 </div>
-            </div>
+            </section>
 
-            <div className="grid md:grid-cols-3 gap-6">
-                {researchData.length > 0 ? researchData.map((paper) => (
-                  <div key={paper.id} className={`group ${themeClasses.cardBg} p-6 md:p-8 rounded-sm border ${themeClasses.border} hover:${isDark ? 'border-zinc-600' : 'border-zinc-400'} transition-all hover:-translate-y-1 relative overflow-hidden shadow-sm`}>
-                      <div className="absolute top-0 right-0 p-4 opacity-10">
-                        <FileText size={40} />
-                      </div>
-                      <div className={`font-mono text-xs ${themeClasses.textSubtle} mb-6`}>DOC-{paper.id} // {paper.publication_date}</div>
-                      <h4 className={`text-xl font-serif ${themeClasses.text} mb-2`}>{paper.title}</h4>
-                      <p className={`text-sm ${themeClasses.textMuted} font-mono mb-8 line-clamp-3`}>{paper.description}</p>
-                      
-                      {paper.link && (
-                        <a href={paper.link} target="_blank" rel="noopener noreferrer" className={`flex items-center gap-2 text-xs font-bold uppercase tracking-widest ${themeClasses.textMuted} group-hover:${themeClasses.text} transition-colors`}>
-                          Access Document <Download size={14} />
-                        </a>
-                      )}
-                  </div>
-                )) : (
-                    <div className={`col-span-3 text-center ${themeClasses.textMuted}`}>No research papers found.</div>
-                )}
-            </div>
-          </RevealOnScroll>
-        </div>
-      </section>
+            {/* Marquee Skills */}
+            <Marquee isDark={isDark} items={skillsData} />
 
-      {/* Contact / Footer */}
-      <section id="contact" className={`pt-16 pb-8 md:pt-32 md:pb-10 px-4 md:px-6 ${themeClasses.sectionBg} relative z-10`}>
-        <div className="container mx-auto max-w-6xl">
-          <RevealOnScroll>
-            <div className="grid md:grid-cols-2 gap-10 md:gap-20">
-              <div className="mb-10 md:mb-0">
-                <h2 className={`text-3xl sm:text-4xl md:text-6xl font-serif mb-6 ${themeClasses.text}`}>Let's start a project.</h2>
-                <p className={`text-base md:text-lg ${themeClasses.textMuted} mb-8 md:mb-12`}>
-                  {aboutData?.freelance_status || "Available for freelance design engineering projects, consulting, and robotic systems development."}
-                </p>
-                <div className="space-y-4 md:space-y-6">
-                  {contactLinks.map((link, i) => (
-                    <a key={i} href={link.href || '#'} target={link.href && link.href.startsWith('http') ? '_blank' : '_self'} rel="noopener noreferrer" className={`flex items-center gap-4 ${themeClasses.textSubtle} hover:${themeClasses.text} transition-colors group`}>
-                      <link.icon size={20} className="group-hover:scale-110 transition-transform"/>
-                      <span className="text-sm md:text-base">{link.text}</span>
-                    </a>
-                  ))}
+            {/* About Section */}
+            <section id="about" className={`py-16 md:py-32 px-6 ${themeClasses.sectionBg} relative z-10 border-b ${themeClasses.border}`}>
+                <div className="container mx-auto max-w-6xl">
+                <RevealOnScroll>
+                    <div className="grid md:grid-cols-2 gap-12 md:gap-20 items-center">
+                    <div>
+                        <span className={`font-mono text-xs uppercase tracking-widest ${themeClasses.textMuted} mb-4 block flex items-center gap-2`}>
+                            <span className={`w-2 h-2 ${isDark ? 'bg-zinc-500' : 'bg-zinc-400'} rounded-full`}></span> About Me
+                        </span>
+                        <h2 className={`text-3xl md:text-5xl font-serif mb-8 leading-tight ${themeClasses.text}`}>
+                        Applying <span className={`italic ${themeClasses.textMuted}`}>first principles</span> to solve complex physical problems.
+                        </h2>
+                        <div className={`space-y-6 text-lg ${themeClasses.textMuted} leading-relaxed font-normal whitespace-pre-wrap mb-10`}> 
+                        {aboutData?.long_bio || "I believe that great engineering is indistinguishable from art. Whether it's optimizing a thermal system or designing a chassis, the goal is always elegance in efficiency."}
+                        </div>
+                    </div>
+                    <div className="relative">
+                        <div 
+                            className={`aspect-[3/4] ${themeClasses.cardBg} rounded-sm overflow-hidden border ${themeClasses.border} relative`}
+                            style={{ transform: `translateY(${scrollY * -0.05}px)` }} 
+                        >
+                            <div className={`absolute inset-4 border ${isDark ? 'border-zinc-700/50' : 'border-zinc-300/50'}`}></div>
+                            <div className={`absolute top-2 right-2 w-2 h-2 border-t border-r ${themeClasses.text}`}></div>
+                            <div className={`absolute bottom-2 left-2 w-2 h-2 border-b border-l ${themeClasses.text}`}></div>
+                            
+                            {aboutData?.profile_image ? (
+                                <img src={aboutData.profile_image} alt="Profile" className="w-full h-full object-cover grayscale opacity-80 hover:opacity-100 hover:grayscale-0 duration-300 transition-opacity" />
+                            ) : (
+                                <div className={`w-full h-full flex items-center justify-center ${themeClasses.textSubtle} font-mono`}>
+                                IMG_PORTRAIT.RAW
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                    </div>
+                </RevealOnScroll>
                 </div>
-              </div>
+            </section>
 
-              <div className={`${themeClasses.cardBg} p-5 md:p-8 rounded-sm border ${themeClasses.border}`}>
-                <form className="space-y-4 md:space-y-6" onSubmit={handleContactSubmit}>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
-                    {['name', 'email'].map((field) => (
-                      <div key={field} className="space-y-2">
-                        <label className={`text-xs uppercase tracking-wider ${themeClasses.textMuted} font-mono`}>{field}</label>
-                        <input 
-                            type={field === 'email' ? 'email' : 'text'} 
-                            name={field}
-                            value={contactForm[field]}
-                            onChange={handleContactChange}
-                            required
-                            className={`w-full ${themeClasses.inputBg} border-2 ${themeClasses.borderContact} rounded-sm p-3 text-sm md:text-base ${themeClasses.text} focus:outline-none focus:border-zinc-500 transition-colors font-sans`} 
-                            placeholder={field === 'email' ? 'Your Email' : 'Your Name'} 
-                        />
-                      </div>
+            {/* Skills Section */}
+            <section id="skills" className={`py-16 md:py-32 px-6 ${themeClasses.sectionBg} relative z-10 border-b ${themeClasses.border}`}>
+                <div className="container mx-auto max-w-6xl">
+                <RevealOnScroll>
+                    <div className="flex items-center gap-4 mb-12 md:mb-16">
+                    <Settings className={themeClasses.textMuted} size={24} />
+                    <h2 className={`text-3xl md:text-5xl font-serif ${themeClasses.text}`}>Technical Proficiency</h2>
+                    </div>
+
+                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
+                    {skillsData.length > 0 ? skillsData.map((skill, index) => (
+                            <div key={skill.id || index} className={`p-4 md:p-6 border ${themeClasses.border} rounded-sm flex flex-col items-center justify-center gap-4 group hover:bg-zinc-500/5 transition-colors`}>
+                                <img 
+                                    src={skill.image_url} 
+                                    alt={skill.name} 
+                                    className={`w-12 h-12 object-contain transition-transform group-hover:scale-110 ${isDark ? 'dark-icon-glow' : ''}`} 
+                                />
+                                <span className={`font-mono text-xs md:text-sm uppercase tracking-wide text-center ${themeClasses.text}`}>
+                                {skill.name}
+                                </span>
+                            </div>
+                        )) : (
+                        <div className={`col-span-full text-center py-10 ${themeClasses.textMuted}`}>No skills loaded.</div>
+                    )}
+                    </div>
+                </RevealOnScroll>
+                </div>
+            </section>
+
+            {/* Education Section */}
+            <section id="education" className={`py-16 md:py-32 px-6 ${themeClasses.sectionBg} relative z-10 border-b ${themeClasses.border}`}>
+                <div className="container mx-auto max-w-6xl">
+                <RevealOnScroll>
+                    <div className="flex items-center gap-4 mb-12 md:mb-16">
+                    <GraduationCap className={themeClasses.textMuted} size={24} />
+                    <h2 className={`text-3xl md:text-5xl font-serif ${themeClasses.text}`}>Education</h2>
+                    </div>
+
+                    <div className={`relative border-l ${themeClasses.border} ml-3 md:ml-0 space-y-12 md:space-y-16`}>
+                    {educationData.length > 0 ? educationData.map((edu) => (
+                        <div key={edu.id} className="relative pl-8 md:pl-12 group">
+                        <div className={`absolute -left-[5px] top-2 w-[9px] h-[9px] ${themeClasses.bg} border ${isDark ? 'border-zinc-500' : 'border-zinc-400'} rounded-full group-hover:${isDark ? 'bg-white' : 'bg-zinc-900'} transition-colors`}></div>
+                        
+                        <div className="grid md:grid-cols-4 gap-4 items-start">
+                            <div className={`md:col-span-1 flex justify-start`}>
+                                <div className={`w-32 h-32 md:w-32 md:h-32 rounded-xl border ${themeClasses.border} ${isDark ? 'bg-zinc-800/50' : 'bg-white'} flex items-center justify-center dark-logo-glow overflow-hidden shrink-0`}>
+                                    {edu.logo_url ? (
+                                        <img src={edu.logo_url} alt={edu.institution} className="w-full h-full object-contain" />
+                                    ) : (
+                                        <Building2 size={24} className={`md:w-8 md:h-8 ${themeClasses.textSubtle}`} />
+                                    )}
+                                </div>
+                            </div>
+                            
+                            <div className="md:col-span-3">
+                                <h4 className={`text-xl md:text-2xl font-medium ${themeClasses.text} group-hover:${themeClasses.textMuted} transition-colors`}>{edu.degree}</h4>
+                                
+                                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-baseline mb-2 gap-1">
+                                    <div className={`${themeClasses.textSubtle} font-serif italic`}>{edu.institution}</div>
+                                    <span className={`font-mono text-sm ${themeClasses.textMuted} whitespace-nowrap`}>{edu.year_range}</span>
+                                </div>
+                                
+                                <p className={`${themeClasses.textMuted} text-sm max-w-lg whitespace-pre-line`}>{edu.description}</p>
+                            </div>
+                        </div>
+                        </div>
+                    )) : (
+                        <p className={`pl-8 ${themeClasses.textMuted}`}>Loading education history...</p>
+                    )}
+                    </div>
+                </RevealOnScroll>
+                </div>
+            </section>
+
+            {/* Experience Section */}
+            <section id="experience" className={`py-16 md:py-32 px-6 ${themeClasses.sectionBg} relative z-10 border-b ${themeClasses.border}`}>
+                <div className="container mx-auto max-w-6xl">
+                <RevealOnScroll>
+                    <div className="flex items-center gap-4 mb-12 md:mb-16">
+                        <Clock className={themeClasses.textMuted} size={24} />
+                        <h2 className={`text-3xl md:text-5xl font-serif ${themeClasses.text}`}>Professional History</h2>
+                    </div>
+
+                    <div className={`relative border-l ${themeClasses.border} ml-3 md:ml-0 space-y-12 md:space-y-16`}>
+                    {experienceData.length > 0 ? experienceData.map((job) => (
+                        <div key={job.id} className="relative pl-8 md:pl-12 group">
+                        <div className={`absolute -left-[5px] top-2 w-[9px] h-[9px] ${themeClasses.bg} border ${isDark ? 'border-zinc-500' : 'border-zinc-400'} rounded-full group-hover:${isDark ? 'bg-white' : 'bg-zinc-900'} transition-colors`}></div>
+                        
+                        <div className="grid md:grid-cols-4 gap-4 items-baseline">
+                            <span className={`font-mono text-sm ${themeClasses.textMuted} md:col-span-1`}>{job.year_range}</span>
+                            <div className="md:col-span-3">
+                                <h4 className={`text-xl md:text-2xl font-medium ${themeClasses.text} group-hover:${themeClasses.textMuted} transition-colors`}>{job.role}</h4>
+                                <div className={`${themeClasses.textSubtle} font-serif italic mb-2`}>{job.company}</div>
+                                <p className={`${themeClasses.textMuted} text-sm max-w-lg whitespace-pre-line`}>{job.description}</p>
+                            </div>
+                        </div>
+                        </div>
+                    )) : (
+                        <p className={`pl-8 ${themeClasses.textMuted}`}>Loading experience...</p>
+                    )}
+                    </div>
+                </RevealOnScroll>
+                </div>
+            </section>
+
+            {/* Projects - Masonry Grid */}
+            <section id="projects" className={`py-16 md:py-32 px-6 ${themeClasses.sectionBg} relative z-10 border-b ${themeClasses.border}`}>
+                <div className="container mx-auto max-w-6xl">
+                <RevealOnScroll>
+                    <div className="flex items-center gap-4 mb-12 md:mb-16">
+                    <Briefcase className={themeClasses.textMuted} size={24} />
+                    <h2 className={`text-3xl md:text-5xl font-serif ${themeClasses.text}`}>Portfolio</h2>
+                    </div>
+
+                    <div className="grid md:grid-cols-2 gap-8 md:gap-x-16">
+                    {projectsData.length > 0 ? projectsData.map((project, index) => (
+                        <RevealOnScroll key={project.id} className={index % 2 !== 0 ? "md:pt-32" : ""}>
+                        <div className="group cursor-pointer mb-12 md:mb-0">
+                            <div className={`aspect-[4/3] ${isDark ? 'bg-zinc-900' : 'bg-zinc-100'} rounded-sm overflow-hidden mb-6 relative transition-all duration-500 group-hover:opacity-99 border ${themeClasses.border}`}>
+                            <div className={`absolute top-4 right-4 font-mono text-[10px] ${themeClasses.textMuted} bg-black/10 px-2 py-1 backdrop-blur-sm rounded`}>PRJ-{project.id}</div>
+                            
+                            {project.image_url ? (
+                                <img src={project.image_url} alt={project.title} className="w-full h-full grayscale hover:grayscale-0 duration-300 transition-opacity object-cover" />
+                            ) : (
+                                <div className={`absolute inset-0 flex items-center justify-center font-serif text-2xl italic opacity-60 ${isDark ? 'text-zinc-600' : 'text-zinc-400'}`}>
+                                    {project.category}
+                                </div>
+                            )}
+                            
+                            <div className="absolute inset-0 border border-white/10 m-4 pointer-events-none"></div>
+                            </div>
+                            <div className={`flex justify-between items-start border-t ${themeClasses.border} pt-4`}>
+                            <div>
+                                <h3 className={`text-2xl md:text-3xl font-serif mb-2 ${themeClasses.text} group-hover:${themeClasses.textMuted} transition-colors`}>{project.title}</h3>
+                                <p className={`${themeClasses.textMuted} max-w-sm text-sm md:text-base font-mono whitespace-pre-line`}>{project.category}</p>
+                            </div>
+                            {project.project_link && (
+                                <a href={project.project_link} target="_blank" rel="noopener noreferrer">
+                                    <ArrowUpRight className={`opacity-0 group-hover:opacity-100 transition-opacity ${themeClasses.text}`} />
+                                </a>
+                            )}
+                            </div>
+                        </div>
+                        </RevealOnScroll>
+                    )) : (
+                        <div className={`col-span-2 text-center py-20 ${themeClasses.textMuted}`}>No projects loaded.</div>
+                    )}
+                    </div>
+                </RevealOnScroll>
+                </div>
+            </section>
+
+            {/* ---------------- NEW BLOG SECTION ---------------- */}
+            <section id="blogs" className={`py-16 md:py-32 px-6 ${themeClasses.sectionBg} relative z-10 border-b ${themeClasses.border}`}>
+                <div className="container mx-auto max-w-6xl">
+                    <RevealOnScroll>
+                        <div className="flex justify-between items-end mb-12 md:mb-16">
+                            <div className="flex items-center gap-4">
+                                <PenTool className={themeClasses.textMuted} size={24} />
+                                <h2 className={`text-3xl md:text-5xl font-serif ${themeClasses.text}`}>Latest Writings</h2>
+                            </div>
+                            <button 
+                                onClick={handleViewAllBlogs}
+                                className={`hidden md:flex items-center gap-2 text-sm font-mono uppercase tracking-widest ${themeClasses.textMuted} hover:${themeClasses.text} transition-colors`}
+                            >
+                                Read All Articles <ArrowUpRight size={16} />
+                            </button>
+                        </div>
+
+                        <div className="grid md:grid-cols-2 gap-8">
+                            {blogsData && blogsData.length > 0 ? (
+                                blogsData.slice(0, 2).map((blog) => ( // Only show latest 2
+                                    <div 
+                                        key={blog.id} 
+                                        onClick={() => handleReadBlog(blog)}
+                                        className={`group cursor-pointer ${themeClasses.cardBg} border ${themeClasses.border} p-0 hover:border-zinc-500 transition-all duration-300 flex flex-col h-full`}
+                                    >
+                                        <div className="aspect-[16/9] w-full overflow-hidden border-b border-zinc-800">
+                                            {/* UPDATED: Image Fallback */}
+                                            <img 
+                                                src={blog.image_url || blog.cover_image || PLACEHOLDER_BLOG_IMG} 
+                                                alt={blog.title} 
+                                                onError={(e) => e.target.src = PLACEHOLDER_BLOG_IMG}
+                                                className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-500 transform group-hover:scale-105"
+                                            />
+                                        </div>
+                                        <div className="p-6 md:p-8 flex flex-col flex-grow">
+                                            <div className="flex items-center gap-3 mb-4">
+                                                <span className={`px-2 py-1 text-[10px] font-mono uppercase border ${themeClasses.border} rounded text-zinc-500`}>
+                                                    {blog.category || 'Engineering'}
+                                                </span>
+                                                <span className={`text-xs font-mono ${themeClasses.textMuted} flex items-center gap-1`}>
+                                                    <Calendar size={12} /> {blog.date || 'Recent'}
+                                                </span>
+                                            </div>
+                                            <h3 className={`text-xl md:text-2xl font-serif ${themeClasses.text} mb-3 group-hover:${themeClasses.textMuted} transition-colors`}>
+                                                {blog.title}
+                                            </h3>
+                                            <p className={`text-sm ${themeClasses.textMuted} line-clamp-3 mb-6 flex-grow`}>
+                                                {blog.summary || blog.content?.substring(0, 150) + '...'}
+                                            </p>
+                                            <div className={`flex items-center gap-2 text-xs font-bold uppercase tracking-widest ${themeClasses.text} opacity-60 group-hover:opacity-100 transition-all`}>
+                                                Read Article <ArrowUpRight size={14} />
+                                            </div>
+                                        </div>
+                                    </div>
+                                ))
+                            ) : (
+                                <div className={`col-span-2 py-12 text-center border ${themeClasses.border} border-dashed rounded`}>
+                                    <p className={themeClasses.textMuted}>No articles published yet.</p>
+                                </div>
+                            )}
+                        </div>
+
+                        <div className="mt-8 md:hidden flex justify-center">
+                             <button 
+                                onClick={handleViewAllBlogs}
+                                className={`flex items-center gap-2 text-sm font-mono uppercase tracking-widest ${themeClasses.text} border ${themeClasses.border} px-6 py-3 rounded-full`}
+                            >
+                                Read All Articles <ArrowUpRight size={16} />
+                            </button>
+                        </div>
+                    </RevealOnScroll>
+                </div>
+            </section>
+
+            {/* Achievements Section */}
+            <section id="achievements" className={`py-16 md:py-32 px-6 ${themeClasses.sectionBg} relative z-10 border-b ${themeClasses.border}`}>
+                <div className="container mx-auto max-w-6xl">
+                <RevealOnScroll>
+                    <div className="flex items-center gap-4 mb-12 md:mb-16">
+                        <Award className={themeClasses.textMuted} size={24} />
+                        <h2 className={`text-3xl md:text-5xl font-serif ${themeClasses.text}`}>Achievements</h2>
+                    </div>
+
+                    <div className="grid md:grid-cols-2 gap-8">
+                    {achievementsData.length > 0 ? achievementsData.map((achievement) => (
+                        <div key={achievement.id} className={`group ${themeClasses.cardBg} p-6 md:p-8 rounded-sm border ${themeClasses.border} hover:${isDark ? 'border-zinc-600' : 'border-zinc-400'} transition-all hover:-translate-y-1 relative`}>
+                        <div className="flex justify-between items-start mb-4">
+                            <h4 className={`text-lg md:text-xl font-serif ${themeClasses.text} group-hover:${themeClasses.textMuted} transition-colors`}>{achievement.title}</h4>
+                            {(achievement.year || achievement.date) && (
+                                <span className={`font-mono text-xs ${themeClasses.textMuted} border ${themeClasses.border} px-2 py-1 rounded-full shrink-0 ml-2`}>{achievement.year || achievement.date}</span>
+                            )}
+                        </div>
+                        {achievement.organization && (
+                            <p className={`${themeClasses.textSubtle} font-medium mb-2`}>{achievement.organization}</p>
+                        )}
+                        <p className={`${themeClasses.textMuted} text-sm leading-relaxed whitespace-pre-line`}>{achievement.description}</p>
+                        </div>
+                    )) : (
+                        <div className={`col-span-2 text-center py-10 ${themeClasses.textMuted}`}>No achievements loaded.</div>
+                    )}
+                    </div>
+                </RevealOnScroll>
+                </div>
+            </section>
+
+            {/* Research Section */}
+            <section id="research" className={`py-16 md:py-32 px-6 ${themeClasses.sectionBg} relative z-10 border-b ${themeClasses.border}`}>
+                <div className="container mx-auto max-w-6xl">
+                <RevealOnScroll>
+                    <div className="flex items-center gap-4 mb-12 md:mb-16">
+                        <BookOpen className={themeClasses.textMuted} size={24} />
+                        <div>
+                        <h2 className={`text-3xl md:text-5xl font-serif ${themeClasses.text}`}>Research & Publications</h2>
+                        <span className={`font-mono text-xs ${themeClasses.textMuted}`}>ACADEMIC ARCHIVE</span>
+                        </div>
+                    </div>
+
+                    <div className="grid md:grid-cols-3 gap-6">
+                        {researchData.length > 0 ? researchData.map((paper) => (
+                        <div key={paper.id} className={`group ${themeClasses.cardBg} p-6 md:p-8 rounded-sm border ${themeClasses.border} hover:${isDark ? 'border-zinc-600' : 'border-zinc-400'} transition-all hover:-translate-y-1 relative overflow-hidden shadow-sm`}>
+                            <div className="absolute top-0 right-0 p-4 opacity-10">
+                                <FileText size={40} />
+                            </div>
+                            <div className={`font-mono text-xs ${themeClasses.textSubtle} mb-6`}>DOC-{paper.id} // {paper.publication_date}</div>
+                            <h4 className={`text-xl font-serif ${themeClasses.text} mb-2`}>{paper.title}</h4>
+                            <p className={`text-sm ${themeClasses.textMuted} font-mono mb-8 line-clamp-3`}>{paper.description}</p>
+                            
+                            {paper.link && (
+                                <a href={paper.link} target="_blank" rel="noopener noreferrer" className={`flex items-center gap-2 text-xs font-bold uppercase tracking-widest ${themeClasses.textMuted} group-hover:${themeClasses.text} transition-colors`}>
+                                Access Document <Download size={14} />
+                                </a>
+                            )}
+                        </div>
+                        )) : (
+                            <div className={`col-span-3 text-center ${themeClasses.textMuted}`}>No research papers found.</div>
+                        )}
+                    </div>
+                </RevealOnScroll>
+                </div>
+            </section>
+
+            {/* Contact / Footer */}
+            <section id="contact" className={`pt-16 pb-8 md:pt-32 md:pb-10 px-4 md:px-6 ${themeClasses.sectionBg} relative z-10`}>
+                <div className="container mx-auto max-w-6xl">
+                <RevealOnScroll>
+                    <div className="grid md:grid-cols-2 gap-10 md:gap-20">
+                    <div className="mb-10 md:mb-0">
+                        <h2 className={`text-3xl sm:text-4xl md:text-6xl font-serif mb-6 ${themeClasses.text}`}>Let's start a project.</h2>
+                        <p className={`text-base md:text-lg ${themeClasses.textMuted} mb-8 md:mb-12`}>
+                        {aboutData?.freelance_status || "Available for freelance design engineering projects, consulting, and robotic systems development."}
+                        </p>
+                        <div className="space-y-4 md:space-y-6">
+                        {contactLinks.map((link, i) => (
+                            <a key={i} href={link.href || '#'} target={link.href && link.href.startsWith('http') ? '_blank' : '_self'} rel="noopener noreferrer" className={`flex items-center gap-4 ${themeClasses.textSubtle} hover:${themeClasses.text} transition-colors group`}>
+                            <link.icon size={20} className="group-hover:scale-110 transition-transform"/>
+                            <span className="text-sm md:text-base">{link.text}</span>
+                            </a>
+                        ))}
+                        </div>
+                    </div>
+
+                    <div className={`${themeClasses.cardBg} p-5 md:p-8 rounded-sm border ${themeClasses.border}`}>
+                        <form className="space-y-4 md:space-y-6" onSubmit={handleContactSubmit}>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
+                            {['name', 'email'].map((field) => (
+                            <div key={field} className="space-y-2">
+                                <label className={`text-xs uppercase tracking-wider ${themeClasses.textMuted} font-mono`}>{field}</label>
+                                <input 
+                                    type={field === 'email' ? 'email' : 'text'} 
+                                    name={field}
+                                    value={contactForm[field]}
+                                    onChange={handleContactChange}
+                                    required
+                                    className={`w-full ${themeClasses.inputBg} border-2 ${themeClasses.borderContact} rounded-sm p-3 text-sm md:text-base ${themeClasses.text} focus:outline-none focus:border-zinc-500 transition-colors font-sans`} 
+                                    placeholder={field === 'email' ? 'Your Email' : 'Your Name'} 
+                                />
+                            </div>
+                            ))}
+                        </div>
+                        <div className="space-y-2">
+                            <label className={`text-xs uppercase tracking-wider ${themeClasses.textMuted} font-mono`}>Subject</label>
+                            <input 
+                                type="text" 
+                                name="subject"
+                                value={contactForm.subject}
+                                onChange={handleContactChange}
+                                className={`w-full ${themeClasses.inputBg} border-2 ${themeClasses.borderContact} rounded-sm p-3 text-sm md:text-base ${themeClasses.text} focus:outline-none focus:border-zinc-500 transition-colors font-sans`} 
+                                placeholder="Project Inquiry" 
+                            />
+                        </div>
+                        <div className="space-y-2">
+                            <label className={`text-xs uppercase tracking-wider ${themeClasses.textMuted} font-mono`}>Message</label>
+                            <textarea 
+                                name="message"
+                                value={contactForm.message}
+                                onChange={handleContactChange}
+                                required
+                                rows="4" 
+                                className={`w-full ${themeClasses.inputBg} border-2 ${themeClasses.borderContact} rounded-sm p-3 text-sm md:text-base ${themeClasses.text} focus:outline-none focus:border-zinc-500 transition-colors resize-none font-sans`} 
+                                placeholder="Tell me about your project needs..."
+                            ></textarea>
+                        </div>
+                        <button 
+                            disabled={sending}
+                            className={`w-full ${isDark ? 'bg-white text-zinc-900' : 'bg-zinc-900 text-white'} font-medium py-3 md:py-4 rounded-sm hover:opacity-90 transition-opacity flex items-center justify-center gap-2 font-mono text-sm uppercase tracking-widest disabled:opacity-50`}
+                        >
+                            {sending ? 'Sending...' : sentSuccess ? 'Message Sent!' : 'Send Message'} <Send size={16} />
+                        </button>
+                        </form>
+                    </div>
+                    </div>
+                    
+                    <div className={`mt-10 pt-8 border-t ${themeClasses.border} flex flex-col md:flex-row justify-between text-xs md:text-sm ${themeClasses.textSubtle} font-mono gap-4 items-center text-center md:text-left`}>
+                    <span>© {new Date().getFullYear()} {aboutData?.name || "Md. Adnan Ahmed"}</span>
+                    </div>
+                </RevealOnScroll>
+                </div>
+            </section>
+        </>
+      )}
+
+      {/* 2. ALL BLOGS VIEW */}
+      {currentView === 'all-blogs' && (
+        <section className={`min-h-screen pt-32 pb-20 px-6 ${themeClasses.sectionBg} relative z-10`}>
+             <div className="container mx-auto max-w-6xl">
+                <div className="mb-12">
+                    <button 
+                        onClick={handleBackToHome}
+                        className={`mb-6 flex items-center gap-2 text-sm font-mono ${themeClasses.textMuted} hover:${themeClasses.text} transition-colors`}
+                    >
+                        <ArrowLeft size={16} /> Back to Home
+                    </button>
+                    <h1 className={`text-4xl md:text-6xl font-serif ${themeClasses.text} mb-4`}>All Writings</h1>
+                    <p className={`${themeClasses.textMuted} text-lg`}>Thoughts on engineering, design, and systems.</p>
+                </div>
+
+                <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+                    {blogsData.map((blog) => (
+                        <div 
+                            key={blog.id} 
+                            onClick={() => handleReadBlog(blog)}
+                            className={`group cursor-pointer ${themeClasses.cardBg} border ${themeClasses.border} p-0 hover:border-zinc-500 transition-all duration-300 flex flex-col`}
+                        >
+                            <div className="aspect-[16/9] w-full overflow-hidden border-b border-zinc-800">
+                                {/* UPDATED: Image Fallback */}
+                                <img 
+                                    src={blog.image_url || blog.cover_image || PLACEHOLDER_BLOG_IMG} 
+                                    alt={blog.title} 
+                                    onError={(e) => e.target.src = PLACEHOLDER_BLOG_IMG}
+                                    className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-500 transform group-hover:scale-105"
+                                />
+                            </div>
+                            <div className="p-6 flex flex-col flex-grow">
+                                <div className="flex items-center gap-3 mb-4">
+                                    <span className={`px-2 py-1 text-[10px] font-mono uppercase border ${themeClasses.border} rounded text-zinc-500`}>
+                                        {blog.category || 'Engineering'}
+                                    </span>
+                                    <span className={`text-xs font-mono ${themeClasses.textMuted} flex items-center gap-1`}>
+                                        <Calendar size={12} /> {blog.date}
+                                    </span>
+                                </div>
+                                <h3 className={`text-xl font-serif ${themeClasses.text} mb-3 group-hover:${themeClasses.textMuted} transition-colors`}>
+                                    {blog.title}
+                                </h3>
+                                <p className={`text-sm ${themeClasses.textMuted} line-clamp-3 mb-4 flex-grow`}>
+                                    {blog.summary || blog.content?.substring(0, 150) + '...'}
+                                </p>
+                            </div>
+                        </div>
                     ))}
-                  </div>
-                  <div className="space-y-2">
-                    <label className={`text-xs uppercase tracking-wider ${themeClasses.textMuted} font-mono`}>Subject</label>
-                    <input 
-                        type="text" 
-                        name="subject"
-                        value={contactForm.subject}
-                        onChange={handleContactChange}
-                        className={`w-full ${themeClasses.inputBg} border-2 ${themeClasses.borderContact} rounded-sm p-3 text-sm md:text-base ${themeClasses.text} focus:outline-none focus:border-zinc-500 transition-colors font-sans`} 
-                        placeholder="Project Inquiry" 
+                </div>
+             </div>
+        </section>
+      )}
+
+      {/* 3. SINGLE BLOG VIEW */}
+      {currentView === 'single-blog' && selectedBlog && (
+        <section className={`min-h-screen pt-32 pb-20 px-6 ${themeClasses.sectionBg} relative z-10`}>
+            <div className="container mx-auto max-w-3xl">
+                <button 
+                    onClick={handleBackToAllBlogs}
+                    className={`mb-8 flex items-center gap-2 text-sm font-mono ${themeClasses.textMuted} hover:${themeClasses.text} transition-colors`}
+                >
+                    <ArrowLeft size={16} /> Back to Articles
+                </button>
+
+                <div className="aspect-[21/9] w-full overflow-hidden rounded-sm mb-10 border border-zinc-800">
+                     {/* UPDATED: Image Fallback */}
+                     <img 
+                        src={selectedBlog.image_url || selectedBlog.image || PLACEHOLDER_BLOG_IMG} 
+                        onError={(e) => e.target.src = PLACEHOLDER_BLOG_IMG}
+                        alt={selectedBlog.title} 
+                        className="w-full h-full object-cover"
                     />
-                  </div>
-                  <div className="space-y-2">
-                    <label className={`text-xs uppercase tracking-wider ${themeClasses.textMuted} font-mono`}>Message</label>
-                    <textarea 
-                        name="message"
-                        value={contactForm.message}
-                        onChange={handleContactChange}
-                        required
-                        rows="4" 
-                        className={`w-full ${themeClasses.inputBg} border-2 ${themeClasses.borderContact} rounded-sm p-3 text-sm md:text-base ${themeClasses.text} focus:outline-none focus:border-zinc-500 transition-colors resize-none font-sans`} 
-                        placeholder="Tell me about your project needs..."
-                    ></textarea>
-                  </div>
-                  <button 
-                    disabled={sending}
-                    className={`w-full ${isDark ? 'bg-white text-zinc-900' : 'bg-zinc-900 text-white'} font-medium py-3 md:py-4 rounded-sm hover:opacity-90 transition-opacity flex items-center justify-center gap-2 font-mono text-sm uppercase tracking-widest disabled:opacity-50`}
-                  >
-                    {sending ? 'Sending...' : sentSuccess ? 'Message Sent!' : 'Send Message'} <Send size={16} />
-                  </button>
-                </form>
-              </div>
+                </div>
+
+                <div className="flex items-center gap-4 mb-6">
+                     <span className={`px-2 py-1 text-xs font-mono uppercase border ${themeClasses.border} rounded ${themeClasses.textMuted}`}>
+                        {selectedBlog.category || 'Article'}
+                    </span>
+                    <span className={`text-sm font-mono ${themeClasses.textMuted} flex items-center gap-2`}>
+                        <Calendar size={14} /> {selectedBlog.date}
+                    </span>
+                </div>
+
+                <h1 className={`text-3xl md:text-5xl font-serif ${themeClasses.text} mb-8 leading-tight`}>
+                    {selectedBlog.title}
+                </h1>
+
+                {/* Content Rendering */}
+                <div className={`prose prose-lg ${isDark ? 'prose-invert' : ''} ${themeClasses.textMuted}`}>
+                     {/* If your API returns HTML, use dangerouslySetInnerHTML. 
+                        If it returns plain text with newlines, we map paragraphs.
+                     */}
+                     {selectedBlog.content ? (
+                        selectedBlog.content.split('\n').map((paragraph, idx) => (
+                            <p key={idx}>{paragraph}</p>
+                        ))
+                     ) : (
+                         <p>Content not available.</p>
+                     )}
+                </div>
+
+                {/* Bottom Navigation */}
+                <div className={`mt-20 pt-10 border-t ${themeClasses.border} flex justify-between`}>
+                    <button onClick={handleBackToAllBlogs} className={`${themeClasses.text} hover:${themeClasses.textMuted}`}>
+                        ← Back to List
+                    </button>
+                    <button onClick={handleBackToHome} className={`${themeClasses.text} hover:${themeClasses.textMuted}`}>
+                        Back Home →
+                    </button>
+                </div>
             </div>
-            
-            <div className={`mt-10 pt-8 border-t ${themeClasses.border} flex flex-col md:flex-row justify-between text-xs md:text-sm ${themeClasses.textSubtle} font-mono gap-4 items-center text-center md:text-left`}>
-              <span>© {new Date().getFullYear()} {aboutData?.name || "Md. Adnan Ahmed"}</span>
-            </div>
-          </RevealOnScroll>
-        </div>
-      </section>
+        </section>
+      )}
       
       {/* Scroll to Top Button */}
       <button
