@@ -803,7 +803,7 @@ const App = () => {
                                         <div className="p-6 md:p-8 flex flex-col flex-grow">
                                             <div className="flex items-center gap-3 mb-4">
                                                 <span className={`px-2 py-1 text-[10px] font-mono uppercase border ${themeClasses.border} rounded text-zinc-500`}>
-                                                    {blog.category || 'Engineering'}
+                                                    {blog.tags || 'Engineering'}
                                                 </span>
                                                 <span className={`text-xs font-mono ${themeClasses.textMuted} flex items-center gap-1`}>
                                                     <Calendar size={12} /> {blog.date || 'Recent'}
@@ -1021,7 +1021,7 @@ const App = () => {
                             <div className="p-6 flex flex-col flex-grow">
                                 <div className="flex items-center gap-3 mb-4">
                                     <span className={`px-2 py-1 text-[10px] font-mono uppercase border ${themeClasses.border} rounded text-zinc-500`}>
-                                        {blog.category || 'Engineering'}
+                                        {blog.tags || 'Engineering'}
                                     </span>
                                     <span className={`text-xs font-mono ${themeClasses.textMuted} flex items-center gap-1`}>
                                         <Calendar size={12} /> {blog.date}
