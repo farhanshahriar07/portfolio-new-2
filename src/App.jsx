@@ -794,7 +794,7 @@ const App = () => {
                                         <div className="aspect-[16/9] w-full overflow-hidden border-b border-zinc-800">
                                             {/* UPDATED: Image Fallback */}
                                             <img 
-                                                src={blog.image_url || blog.image || PLACEHOLDER_BLOG_IMG} 
+                                                src={blog.image_url || blog.cover_image || PLACEHOLDER_BLOG_IMG} 
                                                 alt={blog.title} 
                                                 onError={(e) => e.target.src = PLACEHOLDER_BLOG_IMG}
                                                 className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-500 transform group-hover:scale-105"
@@ -1012,7 +1012,7 @@ const App = () => {
                             <div className="aspect-[16/9] w-full overflow-hidden border-b border-zinc-800">
                                 {/* UPDATED: Image Fallback */}
                                 <img 
-                                    src={blog.image_url || blog.image || PLACEHOLDER_BLOG_IMG} 
+                                    src={blog.image_url || blog.cover_image || PLACEHOLDER_BLOG_IMG} 
                                     alt={blog.title} 
                                     onError={(e) => e.target.src = PLACEHOLDER_BLOG_IMG}
                                     className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-500 transform group-hover:scale-105"
