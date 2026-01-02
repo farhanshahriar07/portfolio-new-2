@@ -613,6 +613,14 @@ const App = () => {
                 </RevealOnScroll>
                 </div>
             </section>
+            
+            {/* Daily Update Marquee */}
+            {aboutData?.daily_update && (
+              <Marquee 
+                isDark={isDark} 
+                items={Array(8).fill({ name: `DAILY UPDATE: ${aboutData.daily_update}` })} 
+              />
+            )}
 
             {/* Skills Section */}
             <section id="skills" className={`py-16 md:py-32 px-6 ${themeClasses.sectionBg} relative z-10 border-b ${themeClasses.border}`}>
