@@ -70,6 +70,23 @@ const styles = `
   .prose p { margin-bottom: 1.5em; line-height: 1.8; }
   .prose h3 { font-family: 'Playfair Display', serif; font-size: 1.5em; margin-top: 2em; margin-bottom: 1em; }
   .prose ul { list-style-type: disc; padding-left: 1.5em; margin-bottom: 1.5em; }
+
+  /* Custom Scrollbar for Daily Updates */
+  .custom-scrollbar::-webkit-scrollbar {
+    width: 6px;
+  }
+  .custom-scrollbar::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  .custom-scrollbar::-webkit-scrollbar-thumb {
+    background-color: rgba(155, 155, 155, 0.5);
+    border-radius: 20px;
+    border: 2px solid transparent;
+    background-clip: content-box;
+  }
+  .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    background-color: rgba(155, 155, 155, 0.7);
+  }
 `;
 
 // --- Components ---
@@ -153,6 +170,10 @@ const App = () => {
   const [sending, setSending] = useState(false);
   const [sentSuccess, setSentSuccess] = useState(false);
 
+  // --- Auto Scroll Refs for Daily Updates ---
+  const dailyUpdatesScrollRef = useRef(null);
+  const isUpdatesHovered = useRef(false);
+
   const isDark = theme === 'dark';
 
   const toggleTheme = () => {
@@ -200,7 +221,7 @@ const App = () => {
     fetchAllData();
   }, []);
 
-  // --- Scroll Listener ---
+  // --- Scroll Listener for Main Window ---
   useEffect(() => {
     const handleScroll = () => {
       if (!mainScrollRef.current) return;
@@ -234,6 +255,39 @@ const App = () => {
         }
     };
   }, [loading, currentView]);
+
+  // --- Daily Updates Auto-Scroll Effect ---
+  useEffect(() => {
+    let animationFrameId;
+    
+    const animateScroll = () => {
+      if (currentView === 'daily-updates' && dailyUpdatesScrollRef.current && !isUpdatesHovered.current) {
+        const element = dailyUpdatesScrollRef.current;
+        
+        // Only scroll if there's content overflowing
+        if (element.scrollHeight > element.clientHeight) {
+            // Adjust the 0.5 value to change scroll speed
+            element.scrollTop += 0.5;
+            
+            // Loop back to top when reaching bottom
+            // Using a small buffer (1px) for float comparisons
+            if (element.scrollTop + element.clientHeight >= element.scrollHeight - 1) {
+                element.scrollTop = 0;
+            }
+        }
+      }
+      animationFrameId = requestAnimationFrame(animateScroll);
+    };
+
+    if (currentView === 'daily-updates') {
+      animationFrameId = requestAnimationFrame(animateScroll);
+    }
+
+    return () => {
+      if (animationFrameId) cancelAnimationFrame(animationFrameId);
+    };
+  }, [currentView, dailyUpdatesData]);
+
 
   const scrollToSection = (id) => {
     if (currentView !== 'home') {
@@ -1216,31 +1270,38 @@ const App = () => {
                     </div>
                  </div>
 
-                 <div className={`relative border-l ${themeClasses.border} ml-4 space-y-12`}>
-                    {dailyUpdatesData && dailyUpdatesData.length > 0 ? (
-                        dailyUpdatesData.map((update, index) => (
-                            <div key={index} className="relative pl-8 md:pl-12 group">
-                                <div className={`absolute -left-[5px] top-2 w-[9px] h-[9px] ${themeClasses.bg} border ${isDark ? 'border-zinc-500' : 'border-zinc-400'} rounded-full group-hover:${isDark ? 'bg-white' : 'bg-zinc-900'} transition-colors`}></div>
-                                
-                                <span className={`font-mono text-xs ${themeClasses.textMuted} block mb-3 opacity-70`}>
-                                    {update.date || new Date().toLocaleDateString()}
-                                </span>
-                                
-                                <div className={`${themeClasses.cardBg} p-6 border ${themeClasses.border} rounded-sm shadow-sm hover:border-zinc-500 transition-colors`}>
-                                    <h3 className={`text-xl md:text-2xl font-serif ${themeClasses.text} mb-3`}>
-                                        {update.title || "Update"}
-                                    </h3>
-                                    <p className={`${themeClasses.textMuted} text-base leading-relaxed whitespace-pre-line`}>
-                                        {update.description || "No description available."}
-                                    </p>
+                 <div 
+                    ref={dailyUpdatesScrollRef}
+                    className={`h-[60vh] overflow-y-auto custom-scrollbar pr-4`}
+                    onMouseEnter={() => isUpdatesHovered.current = true}
+                    onMouseLeave={() => isUpdatesHovered.current = false}
+                 >
+                    <div className={`relative border-l ${themeClasses.border} ml-4 space-y-12`}>
+                        {dailyUpdatesData && dailyUpdatesData.length > 0 ? (
+                            dailyUpdatesData.map((update, index) => (
+                                <div key={index} className="relative pl-8 md:pl-12 group">
+                                    <div className={`absolute -left-[5px] top-2 w-[9px] h-[9px] ${themeClasses.bg} border ${isDark ? 'border-zinc-500' : 'border-zinc-400'} rounded-full group-hover:${isDark ? 'bg-white' : 'bg-zinc-900'} transition-colors`}></div>
+                                    
+                                    <span className={`font-mono text-xs ${themeClasses.textMuted} block mb-3 opacity-70`}>
+                                        {update.date || new Date().toLocaleDateString()}
+                                    </span>
+                                    
+                                    <div className={`${themeClasses.cardBg} p-6 border ${themeClasses.border} rounded-sm shadow-sm hover:border-zinc-500 transition-colors`}>
+                                        <h3 className={`text-xl md:text-2xl font-serif ${themeClasses.text} mb-3`}>
+                                            {update.title || "Update"}
+                                        </h3>
+                                        <p className={`${themeClasses.textMuted} text-base leading-relaxed whitespace-pre-line`}>
+                                            {update.description || "No description available."}
+                                        </p>
+                                    </div>
                                 </div>
+                            ))
+                        ) : (
+                            <div className="pl-8 py-12">
+                                <p className={`${themeClasses.textMuted} text-lg font-mono`}>No updates published yet.</p>
                             </div>
-                        ))
-                    ) : (
-                        <div className="pl-8 py-12">
-                            <p className={`${themeClasses.textMuted} text-lg font-mono`}>No updates published yet.</p>
-                        </div>
-                    )}
+                        )}
+                    </div>
                  </div>
              </div>
         </section>
