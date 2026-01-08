@@ -4,7 +4,8 @@ import {
   Settings, Ruler, GitCommit,
   Moon, Sun, GraduationCap, Facebook, Instagram, Twitter, 
   MessageCircle, Globe, Briefcase, Building2, ArrowUp, Award,
-  Clock, BookOpen, FileText, Send, ArrowLeft, PenTool, Calendar, MapPin
+  Clock, BookOpen, FileText, Send, ArrowLeft, PenTool, Calendar, MapPin,
+  Bell
 } from 'lucide-react';
 
 // --- Configuration ---
@@ -69,6 +70,23 @@ const styles = `
   .prose p { margin-bottom: 1.5em; line-height: 1.8; }
   .prose h3 { font-family: 'Playfair Display', serif; font-size: 1.5em; margin-top: 2em; margin-bottom: 1em; }
   .prose ul { list-style-type: disc; padding-left: 1.5em; margin-bottom: 1.5em; }
+
+  /* Custom Scrollbar for Daily Updates */
+  .custom-scrollbar::-webkit-scrollbar {
+    width: 6px;
+  }
+  .custom-scrollbar::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  .custom-scrollbar::-webkit-scrollbar-thumb {
+    background-color: rgba(155, 155, 155, 0.5);
+    border-radius: 20px;
+    border: 2px solid transparent;
+    background-clip: content-box;
+  }
+  .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    background-color: rgba(155, 155, 155, 0.7);
+  }
 `;
 
 // --- Components ---
@@ -129,7 +147,7 @@ const App = () => {
   const [theme, setTheme] = useState('dark');
   
   // View State
-  const [currentView, setCurrentView] = useState('home'); // 'home', 'all-blogs', 'single-blog', 'journey'
+  const [currentView, setCurrentView] = useState('home'); // 'home', 'all-blogs', 'single-blog', 'journey', 'daily-updates'
   const [selectedBlog, setSelectedBlog] = useState(null);
 
   // Create a ref for the main scrollable container
@@ -145,6 +163,7 @@ const App = () => {
   const [researchData, setResearchData] = useState([]);
   const [achievementsData, setAchievementsData] = useState([]);
   const [blogsData, setBlogsData] = useState([]); 
+  const [dailyUpdatesData, setDailyUpdatesData] = useState([]);
   
   // Contact Form State
   const [contactForm, setContactForm] = useState({ name: '', email: '', subject: '', message: '' });
@@ -167,7 +186,7 @@ const App = () => {
   useEffect(() => {
     const fetchAllData = async () => {
       try {
-        const [aboutRes, skillsRes, eduRes, projectsRes, expRes, researchRes, achievementsRes, blogsRes] = await Promise.all([
+        const [aboutRes, skillsRes, eduRes, projectsRes, expRes, researchRes, achievementsRes, blogsRes, updatesRes] = await Promise.all([
           fetch(`${API_BASE_URL}/about`),
           fetch(`${API_BASE_URL}/skills`),
           fetch(`${API_BASE_URL}/education`),
@@ -175,7 +194,8 @@ const App = () => {
           fetch(`${API_BASE_URL}/experience`),
           fetch(`${API_BASE_URL}/research`),
           fetch(`${API_BASE_URL}/achievements`),
-          fetch(`${API_BASE_URL}/blogs`) 
+          fetch(`${API_BASE_URL}/blogs`),
+          fetch(`${API_BASE_URL}/daily_updates`)
         ]);
 
         if (aboutRes.ok) setAboutData(await aboutRes.json());
@@ -186,6 +206,7 @@ const App = () => {
         if (researchRes.ok) setResearchData(await researchRes.json());
         if (achievementsRes.ok) setAchievementsData(await achievementsRes.json());
         if (blogsRes.ok) setBlogsData(await blogsRes.json());
+        if (updatesRes.ok) setDailyUpdatesData(await updatesRes.json());
       } catch (error) {
         console.error("Failed to fetch data:", error);
       } finally {
@@ -259,6 +280,11 @@ const App = () => {
 
   const handleViewJourney = () => {
     setCurrentView('journey');
+    scrollToTop();
+  }
+
+  const handleViewDailyUpdates = () => {
+    setCurrentView('daily-updates');
     scrollToTop();
   }
 
@@ -460,7 +486,7 @@ const App = () => {
                     </button>
                     <span className={themeClasses.textMuted}>/</span>
                     <span className={`px-4 py-2 text-xs lg:text-sm font-medium ${themeClasses.text}`}>
-                        {currentView === 'all-blogs' ? 'All Blogs' : currentView === 'journey' ? 'Journey' : 'Reading'}
+                        {currentView === 'all-blogs' ? 'All Blogs' : currentView === 'journey' ? 'Journey' : currentView === 'daily-updates' ? 'Updates' : 'Reading'}
                     </span>
                 </div>
             )}
@@ -592,6 +618,17 @@ const App = () => {
                         <div className={`space-y-6 text-lg ${themeClasses.textMuted} leading-relaxed font-normal whitespace-pre-wrap mb-10`}> 
                         {aboutData?.long_bio || "I believe that great engineering is indistinguishable from art. Whether it's optimizing a thermal system or designing a chassis, the goal is always elegance in efficiency."}
                         </div>
+                        
+                        {/* Daily Update Button */}
+                        <div className="mt-8">
+                             <button 
+                                onClick={handleViewDailyUpdates}
+                                className={`flex items-center gap-2 px-6 py-3 rounded-full border ${themeClasses.border} ${themeClasses.text} hover:${themeClasses.cardBg} hover:shadow-md transition-all group`}
+                            >
+                                <Bell size={18} className="group-hover:text-yellow-500 transition-colors" />
+                                <span className="font-mono text-sm uppercase tracking-wider">View Daily Updates</span>
+                            </button>
+                        </div>
                     </div>
                     <div className="relative">
                         <div 
@@ -614,13 +651,7 @@ const App = () => {
                 </div>
             </section>
             
-            {/* Daily Update Marquee */}
-            {aboutData?.daily_update && (
-              <Marquee 
-                isDark={isDark} 
-                items={Array(8).fill({ name: `DAILY UPDATE: ${aboutData.daily_update}` })} 
-              />
-            )}
+            {/* REMOVED DAILY UPDATE MARQUEE */}
 
             {/* Skills Section */}
             <section id="skills" className={`py-16 md:py-32 px-6 ${themeClasses.sectionBg} relative z-10 border-b ${themeClasses.border}`}>
@@ -1181,6 +1212,55 @@ const App = () => {
                         </div>
                     </div>
                 </div>
+             </div>
+        </section>
+      )}
+
+      {/* 5. NEW DAILY UPDATES VIEW */}
+      {currentView === 'daily-updates' && (
+        <section className={`min-h-screen pt-32 pb-20 px-6 ${themeClasses.sectionBg} relative z-10`}>
+             <div className="container mx-auto max-w-4xl">
+                 <div className="mb-12">
+                     <button 
+                        onClick={handleBackToHome}
+                        className={`mb-6 flex items-center gap-2 text-sm font-mono ${themeClasses.textMuted} hover:${themeClasses.text} transition-colors`}
+                    >
+                        <ArrowLeft size={16} /> Back to Home
+                    </button>
+                    <div className="flex items-center gap-4">
+                        <Bell className={themeClasses.textMuted} size={28} />
+                        <h1 className={`text-3xl md:text-5xl font-serif ${themeClasses.text}`}>Daily Updates</h1>
+                    </div>
+                 </div>
+
+                 <div className={`h-[60vh] overflow-y-auto custom-scrollbar pr-4`}>
+                    <div className={`relative border-l ${themeClasses.border} ml-4 space-y-12`}>
+                        {dailyUpdatesData && dailyUpdatesData.length > 0 ? (
+                            dailyUpdatesData.map((update, index) => (
+                                <div key={index} className="relative pl-8 md:pl-12 group">
+                                    <div className={`absolute -left-[5px] top-2 w-[9px] h-[9px] ${themeClasses.bg} border ${isDark ? 'border-zinc-500' : 'border-zinc-400'} rounded-full group-hover:${isDark ? 'bg-white' : 'bg-zinc-900'} transition-colors`}></div>
+                                    
+                                    <span className={`font-mono text-xs ${themeClasses.textMuted} block mb-3 opacity-70`}>
+                                        {update.date || new Date().toLocaleDateString()}
+                                    </span>
+                                    
+                                    <div className={`${themeClasses.cardBg} p-6 border ${themeClasses.border} rounded-sm shadow-sm hover:border-zinc-500 transition-colors`}>
+                                        <h3 className={`text-xl md:text-2xl font-serif ${themeClasses.text} mb-3`}>
+                                            {update.title || "Update"}
+                                        </h3>
+                                        <p className={`${themeClasses.textMuted} text-base leading-relaxed whitespace-pre-line`}>
+                                            {update.description || "No description available."}
+                                        </p>
+                                    </div>
+                                </div>
+                            ))
+                        ) : (
+                            <div className="pl-8 py-12">
+                                <p className={`${themeClasses.textMuted} text-lg font-mono`}>No updates published yet.</p>
+                            </div>
+                        )}
+                    </div>
+                 </div>
              </div>
         </section>
       )}
