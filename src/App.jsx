@@ -1131,7 +1131,7 @@ const App = () => {
                 <div className="aspect-[21/9] w-full overflow-hidden rounded-sm mb-10 border border-zinc-800">
                      {/* UPDATED: Image Fallback */}
                      <img 
-                        src={selectedBlog.image_url || selectedBlog.image || PLACEHOLDER_BLOG_IMG} 
+                        src={selectedBlog.image_url || selectedBlog.cover_image || PLACEHOLDER_BLOG_IMG} 
                         onError={(e) => e.target.src = PLACEHOLDER_BLOG_IMG}
                         alt={selectedBlog.title} 
                         className="w-full h-full object-cover"
